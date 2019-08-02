@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<head>
+    <!-- Use correct character set. -->
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="js/demo.js"></script>
+<script>
+    addLegend();
+    $.get("datas/wind.json", function(result) {
+        result = result.data.data;
+        var header = result[0].header;
+        var winds = [];
+        for(var i = 0;i < result[0].data.length; i++) {
+            var u = result[0].data[i],
+                v = result[1].data[i];
+            var ws = Math.sqrt(Math.pow(u, 2) + Math.pow(v, 2));
+            winds.push(ws);
+        }
+
+        var n = header.nx,
+            m = header.ny;
+
+        var canvas = document.createElement('canvas');
+        canvas.setAttribute("width", n);
+        canvas.setAttribute("height", m);
+        document.body.appendChild(canvas);
+
+        var context = canvas.getContext("2d"),
+            image = context.createImageData(n, m);
+
+        var k = 0;
+        for (var j = 0, l = 0; j < m; j++) {
+            for (var i = 0; i < n; i++, l += 4) {
+                var c = getColor(winds[k]);
+                image.data[l + 0] = parseInt(c[0]);
+                image.data[l + 1] = parseInt(c[1]);
+                image.data[l + 2] = parseInt(c[2]);
+                image.data[l + 3] = parseInt(c[3]);
+                k++;
+            }
+        }
+        console.log(image);
+        context.putImageData(image, 0, 0);
+    });
+</script>
+</body>

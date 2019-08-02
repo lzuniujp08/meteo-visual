@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<canvas width="600" height="300" id="c1"></canvas>
+<script>
+  var canvas = document.getElementById('c1');
+  var ctx = canvas.getContext('2d');
+  ctx.beginPath();
+  //该对象的作用域是以(100,100)为圆心、半径为10px的内圆和以(100,100)为圆心、半径为50px的外圆之间的环状区域
+  var grad = ctx.createRadialGradient(50, 50, 0, 50, 50, 50);
+  grad.addColorStop(0,'rgb(255, 0, 0)');
+  grad.addColorStop(1,'rgba(255, 0, 0, 0)');
+  ctx.fillStyle = grad;
+  ctx.rect(0,0, 100,100);
+  ctx.fill();
+</script>
+</body>
+</html>

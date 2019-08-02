@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+    <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map"></div>
+<div id="popup"></div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  var vec_w = getTilelayer("light");
+  map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+  var popup = new ol.Overlay({
+      element: document.getElementById('popup'),
+      position: null,
+      positioning: 'center-left',
+      offset: [16, 0]
+  });
+  map.addOverlay(popup);
+  map.on('pointermove', function (e) {
+      var geoPt = ol.proj.toLonLat(e.coordinate);
+      var x = parseInt((geoPt[0] - header.lo1) / header.dx),
+        y = parseInt((header.la1 - geoPt[1]) / header.dy);
+      if(x >= 0 && y >= 0 && x < header.nx && y < header.ny) {
+          var idx = y *header.nx + x;
+          if (idx > 0 && idx < winds.length) {
+              document.getElementById('popup').innerText = winds[idx].toFixed(2);
+              popup.setPosition(e.coordinate);
+          } else  {
+              popup.setPosition(null);
+          }
+      }else  {
+          popup.setPosition(null);
+      }
+  });
+
+  var imageLayer = new ol.layer.Image({
+      source: null,
+      opacity: 0.85
+  });
+  map.addLayer(imageLayer);
+
+  var header = {};
+  var winds = [];
+  var bounds = [7792364.355529151, 1660405.273422187, 16169156.037722988, 9608371.509933658];
+  var _image = new Image();
+  
+  function canvasFunction(extent, res, pixelRatio, size) {
+      var canvasWidth = size[0];
+      var canvasHeight = size[1];
+      var canvas = document.createElement('canvas');
+      canvas.setAttribute('width', canvasWidth);
+      canvas.setAttribute('height', canvasHeight);
+      var ctx = canvas.getContext('2d');
+      var _min = [bounds[0], bounds[1]],
+        _max = [bounds[2], bounds[3]],
+        _topLeft = [bounds[0], bounds[3]];
+      var _scrMin = map.getPixelFromCoordinate(_min),
+        _scrMax = map.getPixelFromCoordinate(_max),
+        _scrTopLeft = map.getPixelFromCoordinate(_topLeft);
+      var _w = Math.round(_scrMax[0] - _scrMin[0]),
+        _h = Math.round(_scrMin[1] - _scrMax[1]),
+        _left = _scrTopLeft[0] + (size[0] - map.getSize()[0]) / 2,
+        _top = _scrTopLeft[1] + (size[1] - map.getSize()[1]) / 2;
+      ctx.drawImage(_image, _left, _top, _w, _h);
+      return canvas;
+  }
+  
+  $.get("datas/wind.json", function(result) {
+    result = result.data.data;
+    header = result[0].header;
+    for(var i = 0;i < result[0].data.length; i++) {
+      var u = result[0].data[i],
+        v = result[1].data[i];
+      var ws = Math.sqrt(Math.pow(u, 2) + Math.pow(v, 2));
+      winds.push(ws);
+    }
+    
+      var n = header.nx,
+        m = header.ny;
+      var _canvas = document.createElement('canvas');
+      _canvas.setAttribute("width", n);
+      _canvas.setAttribute("height", m);
+      var context = _canvas.getContext("2d"),
+        image = context.createImageData(n, m);
+      var k = 0;
+      for (var j = 0, l = 0; j < m; j++) {
+          for (var i = 0; i < n; i++, l += 4) {
+              var c = getColor(winds[k]);
+              image.data[l + 0] = parseInt(c[0]);
+              image.data[l + 1] = parseInt(c[1]);
+              image.data[l + 2] = parseInt(c[2]);
+              image.data[l + 3] = parseInt(c[3]);
+              k++;
+          }
+      }
+      context.putImageData(image, 0, 0);
+      _image.src = _canvas.toDataURL("image/png");
+    
+      var source = new ol.source.ImageStatic({
+          url: _canvas.toDataURL("image/png"),
+          imageExtent: bounds
+      });
+      // var source = new ol.source.ImageCanvas({
+      //     canvasFunction: canvasFunction
+      // });
+      imageLayer.setSource(source);
+  });
+</script>
+</body>

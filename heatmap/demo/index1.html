@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>simpleheat demo</title>
+</head>
+<body>
+<script src="../simpleheat.js"></script>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+  var header = {};
+  var winds = [];
+  $.get("../../codes/datas/wind.json", function (result) {
+    result = result.data.data;
+    header = result[0].header;
+    for(var i = 0;i < result[0].data.length; i++) {
+      var u = result[0].data[i],
+        v = result[1].data[i];
+      var ws = Math.sqrt(Math.pow(u, 2) + Math.pow(v, 2));
+      winds.push(ws);
+    }
+
+    var datas = [];
+    var max = 0;
+    for(var i = 0; i<header.ny;i++){
+      for(var j = 0; j<header.nx;j++){
+        var idx = i*header.nx + j;
+        var val = winds[idx];
+        if(max< val) max = val;
+        datas.push([j, i, val]);
+      }
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.setAttribute("width", header.nx);
+    canvas.setAttribute("height", header.ny);
+    document.body.appendChild(canvas);
+    var heat = simpleheat(canvas).data(datas).max(max);
+    heat.radius(1, 1);
+    heat.draw();
+  });
+
+
+</script>
+</body>
+</html>

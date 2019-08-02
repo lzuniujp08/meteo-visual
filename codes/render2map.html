@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+    <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map"></div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  addGradientLegend();
+  var vec_w = getTilelayer("light");
+  map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+
+  var bounds =  [7792364.355529151,1689200.1396078935,16141326.16502467,9608371.509933658];
+  var image = new ol.layer.Image({
+    source: new ol.source.ImageStatic({
+      url: "datas/GDFS_meter_201811271200_201811281700_WIND.png",
+      // url: "data/2018112815282141219.webp",
+      imageExtent: bounds
+    }),
+    opacity:0.6
+  });
+  // map.addLayer(image);
+
+  var size = map.getSize();
+  var n = size[0],
+    m = size[1];
+  var canvas = document.createElement('canvas');
+  canvas.style.position = "absolute";
+  canvas.style.left = 0;
+  canvas.style.top = 0;
+  canvas.setAttribute("width", n);
+  canvas.setAttribute("height", m);
+  map.getViewport().appendChild(canvas);
+
+  var context = canvas.getContext("2d");
+  context.globalAlpha = 0.5;
+
+  var header = {};
+  var winds = [];
+  $.get("datas/wind.json", function(result) {
+    result = result.data.data;
+    header = result[0].header;
+    for(var i = 0;i < result[0].data.length; i++) {
+      var u = result[0].data[i],
+        v = result[1].data[i];
+      var ws = Math.sqrt(Math.pow(u, 2) + Math.pow(v, 2));
+      winds.push(ws);
+    }
+
+    setTimeout(addCanvasLayer, 500);
+    map.on("movestart", function () {
+      canvas.style.display = "none";
+    });
+    map.on("moveend", function () {
+      addCanvasLayer();
+    });
+  });
+
+
+  function addCanvasLayer() {
+    image = context.createImageData(n, m);
+    for (var j = 0, l = 0; j < m; j++) {
+      for (var i = 0; i < n; i++, l += 4) {
+        var geoPt = ol.proj.toLonLat(map.getCoordinateFromPixel([i, j]));
+        var x = parseInt((geoPt[0] - header.lo1) / header.dx),
+          y = parseInt((header.la1 - geoPt[1]) / header.dy);
+        var c = [255,255,255,0];
+        if(x >= 0 && y >= 0 && x < header.nx && y < header.ny) {
+          var idx = y *header.nx + x;
+          c = getColor(winds[idx]);
+        }
+        image.data[l + 0] = parseInt(c[0]);
+        image.data[l + 1] = parseInt(c[1]);
+        image.data[l + 2] = parseInt(c[2]);
+        image.data[l + 3] = parseInt(c[3]);
+      }
+    }
+    context.putImageData(image, 0, 0);
+    canvas.style.display = "block";
+  }
+</script>
+</body>
