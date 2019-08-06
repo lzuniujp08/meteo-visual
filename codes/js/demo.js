@@ -78,6 +78,20 @@ function getTilelayer(lyr){
   return layer;
 }
 
+function getWmsLayer() {
+  var wms = new ol.layer.Image({
+    source: new ol.source.ImageWMS({
+      ratio: 1,
+      url: 'http://39.106.122.204:8086/geoserver/world/wms',
+      params: {
+        'VERSION': '1.1.1',
+        STYLES: '',
+        LAYERS: 'world:base_province',
+      }
+    })
+  });
+  return wms;
+}
 
 //数据池
 var store = function(smap) {

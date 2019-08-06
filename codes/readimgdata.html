@@ -13,8 +13,8 @@
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
 <script src="js/demo.js"></script>
 <script>
-  var vec_w = getTilelayer("light");
-  var geoBounds = [113.2074, 37.4351, 119.427, 42.7022];
+  var vec_w = getWmsLayer("light");
+  var geoBounds = [70, 15, 140, 60];
   var imgPixels = [];
   var width = 0,
     height = 0,
@@ -42,7 +42,7 @@
   });
   map.addOverlay(popup);
   addLegend();
-  var minZoom = 12;
+  var intervalPixel = 100;
   map.on('pointermove', function (e) {
     var geoPt = ol.proj.toLonLat(e.coordinate);
     var val = getVal(geoPt);
@@ -56,22 +56,42 @@
   
   map.on("moveend", function () {
     _source.clear();
-    var zoom = map.getView().getZoom();
-    if(zoom >minZoom) {
       var extent = map.getView().calculateExtent();
+      var geoExtent = ol.proj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
+      var lonmin, lonmax, latmin, latmax;
+      lonmin = geoExtent[0] > geoBounds[0] ? geoExtent[0] : geoBounds[0];
+      latmin = geoExtent[1] < geoBounds[1] ? geoExtent[1] : geoBounds[1];
+      lonmax = geoExtent[2] > geoBounds[2] ? geoExtent[2] : geoBounds[2];
+      latmax = geoExtent[3] < geoBounds[3] ? geoExtent[3] : geoBounds[3];
+      var topLeft = [lonmin, latmax];
+      var topLeft3857 = ol.proj.fromLonLat(topLeft);
+      var topLeftPixel = map.getPixelFromCoordinate(topLeft3857);
+      var topLeftSetPixel = [topLeftPixel[0] + intervalPixel, topLeftPixel[1]];
+      var topLeftSet3857 = map.getCoordinateFromPixel(topLeftSetPixel);
+      var topLeftSet = ol.proj.toLonLat(topLeftSet3857);
+      var intervalDegree = topLeftSet[0] - topLeft[0];
+      var nx = Math.floor((lonmax - lonmin) / intervalDegree),
+        ny = Math.floor((latmax - latmin) / intervalDegree * 2);
       var _features = [];
-      for (var i = 0; i < features.length; i++) {
-        var f = features[i];
-        var coord = ol.proj.fromLonLat(f.coord);
-        if(ol.extent.containsCoordinate(extent, coord)) {
-          _features.push(new ol.Feature({
-            geometry: new ol.geom.Point(coord),
-            val: f.val
-          }));
+      // y是固定的，x根据奇偶行变换
+      for(var i = 0;i<=ny;i++) {
+        var lat = latmax - i * intervalDegree / 2;
+        var lonAdd = i%2 !==0 ? intervalDegree / 2 : 0;
+        for(var j=0;j<=nx;j++) {
+          var lon = lonmin + j * intervalDegree;
+          lon = lon + lonAdd ;
+          var lonLat = [lon + dx/2, lat + dy/2];
+          var coord = ol.proj.fromLonLat(lonLat);
+          if(ol.extent.containsCoordinate(extent, coord)) {
+            var val = getVal(lonLat);
+            _features.push(new ol.Feature({
+              geometry: new ol.geom.Point(coord),
+              val: val
+            }));
+          }
         }
       }
       _source.addFeatures(_features);
-    }
   });
   
 
@@ -81,20 +101,18 @@
   });
   map.addLayer(imageLayer);
 
-  var features = [];
   var textLayer = new ol.layer.Vector({
     source: null,
     opacity: 0.85,
     style: function (feat) {
-      var zoom = map.getView().getZoom();
       var val = feat.get("val");
-      if(val && zoom > minZoom) {
+      if(val) {
         return new ol.style.Style({
           text: new ol.style.Text({
             font: 'normal 14px 黑体',
             text: val.toFixed(1),
             fill: new ol.style.Fill({
-              color: '#000000'
+              color: '#ff0000'
             }),
             stroke: new ol.style.Stroke({
               color: '#ffff',
@@ -115,22 +133,20 @@
   textLayer.setSource(_source);
   
   var img = new Image();
-  img.src = 'css/ws.png';
+  img.src = 'css/ws_china.png';
   img.onload = function () {
     var canvas = document.createElement('canvas');
     width = img.width;
     height = img.height;
     dx = (geoBounds[2] - geoBounds[0])/width;
     dy = (geoBounds[3] - geoBounds[1])/height;
-    
     canvas.height = height;
     canvas.width = width;
     document.body.appendChild(canvas);
     var ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
-    var image = ctx.createImageData(width, height);
     imgPixels = ctx.getImageData(0, 0, width, height);
-    
+    var image = ctx.createImageData(width, height);
     // canvas先绘制行，在绘制列
     for(var j = 0;j<height;j++){
       for(var i = 0;i<width;i++){
@@ -143,47 +159,16 @@
         image.data[_ji + 1] = parseInt(c[1]);
         image.data[_ji + 2] = parseInt(c[2]);
         image.data[_ji + 3] = val === 0 ? 0 : parseInt(c[3]);
-        
-        var lon = geoBounds[0] + i * dx + dx/2,
-          lat = geoBounds[3] - j * dy - dy/2;
-        features.push({
-          val: val,
-          coord: [lon, lat]
-        })
       }
     }
     ctx.putImageData(image, 0, 0);
-    
+
     var source = new ol.source.ImageStatic({
       url: canvas.toDataURL("image/png"),
       imageExtent: bounds
     });
     imageLayer.setSource(source);
-    
-    
   };
-  
-  // function canvasFunction(extent, res, pixelRatio, size) {
-  //   var canvasWidth = size[0];
-  //   var canvasHeight = size[1];
-  //   var canvas = document.createElement('canvas');
-  //   canvas.setAttribute('width', canvasWidth);
-  //   canvas.setAttribute('height', canvasHeight);
-  //   var ctx = canvas.getContext('2d');
-  //
-  //   var lon = geoBounds[0],
-  //     lat = geoBounds[3];
-  //   var geoPt = [lon, lat];
-  //   var val = getVal(geoPt);
-  //   var coord = ol.proj.fromLonLat(geoPt);
-  //   var pixel = map.getPixelFromCoordinate(coord);
-  //   ctx.font = "normal 12px";
-  //   ctx.fillText(val? val.toFixed(0) : 0, pixel[0], pixel[1]);
-  //   ctx.rect(0, 0, canvasWidth, canvasHeight);
-  //   ctx.fillStyle = "rgba(255, 0 , 0 , 0.1)";
-  //   ctx.fill();
-  //   return canvas;
-  // }
   
   function getVal(geoPt) {
     var x = parseInt((geoPt[0] - geoBounds[0]) / dx),

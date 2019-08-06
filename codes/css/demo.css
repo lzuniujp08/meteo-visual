@@ -23,8 +23,9 @@ html, body, #map {
 
 #popup {
   padding: 5px;
-  background-color: white;
-  font-size: 12px; }
+  background-color: #34b6ff;
+  font-size: 12px;
+  color: white; }
   #popup:before {
     top: 5px;
     left: -16px;
@@ -35,7 +36,7 @@ html, body, #map {
     position: absolute;
     pointer-events: none; }
   #popup:before {
-    border-right-color: white;
+    border-right-color: #34b6ff;
     border-width: 8px; }
 
 /*# sourceMappingURL=demo.css.map */

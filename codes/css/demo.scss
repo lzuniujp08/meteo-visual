@@ -27,11 +27,11 @@ html, body, #map {
     }
   }
 }
-
 #popup {
   padding: 5px;
-  background-color: white;
+  background-color: #34b6ff;
   font-size: 12px;
+  color: white;
   &:before {
     top: 5px;
     left: -16px;
@@ -43,7 +43,7 @@ html, body, #map {
     pointer-events: none;
   }
   &:before {
-    border-right-color: white;
+    border-right-color: #34b6ff;
     border-width: 8px;
   }
 }
