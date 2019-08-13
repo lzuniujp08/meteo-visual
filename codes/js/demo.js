@@ -265,3 +265,31 @@ SpatialMap.prototype = {
     this.set("height", canvas.height);
   }
 }
+
+
+function getValueColor(val) {
+  var colorDict = [{"color":"153,51,204,255","lable":">=40","legendCode":"pre","sortBy":14,"id":"29cdcaf1725641f5ad9d4e4787352109"},{"color":"255,0,255,255","lable":"25~40","legendCode":"pre","sortBy":13,"id":"092addeb3bc94194b92ff7e72fc69dc9"},{"color":"255,102,255,255","lable":"20~25","legendCode":"pre","sortBy":12,"id":"e6265d895a7342b3a109fed94804ab63"},{"color":"153,0,0,255","lable":"16~20","legendCode":"pre","sortBy":11,"id":"923961445ae0464793916a035c6f5987"},{"color":"204,0,51,255","lable":"13~16","legendCode":"pre","sortBy":10,"id":"f8c88110bb0b4e28989aeb8d18ddc38a"},{"color":"255,51,0,255","lable":"10~13","legendCode":"pre","sortBy":9,"id":"9ba8e7cd79ec4c158cd2e2a4ddcb0da2"},{"color":"255,204,0,255","lable":"7~10","legendCode":"pre","sortBy":8,"id":"463e6e2e83464b63a4f8bbf08e321027"},{"color":"255,255,102,255","lable":"5~7","legendCode":"pre","sortBy":7,"id":"b175c3b2667142b7a547ead11b446736"},{"color":"0,102,255,255","lable":"3~5","legendCode":"pre","sortBy":6,"id":"f3133e5eb1a04e599fe74d52847b9620"},{"color":"102,204,255,255","lable":"2~3","legendCode":"pre","sortBy":5,"id":"85ac9e60c2bc475483f93ab0fe2b77fa"},{"color":"51,153,0,255","lable":"1~2","legendCode":"pre","sortBy":4,"id":"37582a4a7c164146b3fca85e2c486945"},{"color":"51,204,102,255","lable":"0.5~1","legendCode":"pre","sortBy":3,"id":"eb980f5a0eda472d97f0ffa2c8a70067"},{"color":"153,255,153,255","lable":"0.1~0.5","legendCode":"pre","sortBy":2,"id":"013b08a693dc4467878aa7c0a191612e"},{"color":"0,0,0,0.1","lable":"0","legendCode":"pre","sortBy":1,"id":"dcd37b17ded049b69fb2d955c28eaf53"}];
+  for(var i = 0;i<colorDict.length;i++) {
+    var c = colorDict[i];
+    if(c.lable.indexOf('~')!==-1) {
+      var vals = c.lable.split('~').map(Number);
+      var min = vals[0],
+        max = vals[1];
+      if(val >= min && val <= max) {
+        return 'rgba('+ c.color +')';
+      }
+    }
+    else if(c.lable.indexOf('>')!==-1) {
+      var min = Number(c.lable.replace(/[^0-9]/ig,""));
+      if(val >= min) {
+        return 'rgba('+ c.color +')';
+      }
+    }
+    else {
+      var max = Number(c.lable.replace(/[^0-9]/ig,""));
+      if(val <= max) {
+        return 'rgba('+ c.color +')';
+      }
+    }
+  }
+}
