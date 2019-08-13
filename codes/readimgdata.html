@@ -57,12 +57,12 @@
   map.on("moveend", function () {
     _source.clear();
       var extent = map.getView().calculateExtent();
-      var geoExtent = ol.proj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
+      var mapExtent = ol.proj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
       var lonmin, lonmax, latmin, latmax;
-      lonmin = geoExtent[0] > geoBounds[0] ? geoExtent[0] : geoBounds[0];
-      latmin = geoExtent[1] < geoBounds[1] ? geoExtent[1] : geoBounds[1];
-      lonmax = geoExtent[2] > geoBounds[2] ? geoExtent[2] : geoBounds[2];
-      latmax = geoExtent[3] < geoBounds[3] ? geoExtent[3] : geoBounds[3];
+      lonmin = mapExtent[0] > geoBounds[0] ? mapExtent[0] : geoBounds[0];
+      latmin = mapExtent[1] > geoBounds[1] ? mapExtent[1] : geoBounds[1];
+      lonmax = mapExtent[2] < geoBounds[2] ? mapExtent[2] : geoBounds[2];
+      latmax = mapExtent[3] < geoBounds[3] ? mapExtent[3] : geoBounds[3];
       var topLeft = [lonmin, latmax];
       var topLeft3857 = ol.proj.fromLonLat(topLeft);
       var topLeftPixel = map.getPixelFromCoordinate(topLeft3857);
@@ -70,8 +70,9 @@
       var topLeftSet3857 = map.getCoordinateFromPixel(topLeftSetPixel);
       var topLeftSet = ol.proj.toLonLat(topLeftSet3857);
       var intervalDegree = topLeftSet[0] - topLeft[0];
-      var nx = Math.floor((lonmax - lonmin) / intervalDegree),
-        ny = Math.floor((latmax - latmin) / intervalDegree * 2);
+      intervalDegree = intervalDegree < dx ? dx : intervalDegree;
+      var nx = Math.round((lonmax - lonmin) / intervalDegree),
+        ny = Math.round((latmax - latmin) / intervalDegree * 2);
       var _features = [];
       // y是固定的，x根据奇偶行变换
       for(var i = 0;i<=ny;i++) {
@@ -80,15 +81,14 @@
         for(var j=0;j<=nx;j++) {
           var lon = lonmin + j * intervalDegree;
           lon = lon + lonAdd ;
+          if(i === 0 && j ===0) console.log(mapExtent.concat([intervalDegree, lon]).join(','));
           var lonLat = [lon + dx/2, lat + dy/2];
           var coord = ol.proj.fromLonLat(lonLat);
-          if(ol.extent.containsCoordinate(extent, coord)) {
-            var val = getVal(lonLat);
-            _features.push(new ol.Feature({
-              geometry: new ol.geom.Point(coord),
-              val: val
-            }));
-          }
+          var val = getVal(lonLat);
+          _features.push(new ol.Feature({
+            geometry: new ol.geom.Point(coord),
+            val: val
+          }));
         }
       }
       _source.addFeatures(_features);
