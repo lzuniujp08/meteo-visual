@@ -70,7 +70,7 @@
 
     var bottomRight4326 = [mapExtent4326[2], mapExtent4326[1]];
     var dBottomRight4326 = [geoBounds[2], geoBounds[1]];
-    var dTopLeft4326 = [geoBounds[0] + dx, geoBounds[3] - dy];
+    var dTopLeft4326 = [geoBounds[0] + dx/2, geoBounds[3] - dy/2];
     var xIndexMin = topLeft4326[0] < dTopLeft4326[0] ?
       0 : Math.floor((topLeft4326[0] - dTopLeft4326[0])/intervalDeg);
     var xIndexMax = bottomRight4326[0] > dBottomRight4326[0] ?
@@ -95,7 +95,7 @@
       for(var i = xIndexMin; i<=xIndexMax;i++) {
         var lon = dTopLeft4326[0] + i * intervalDeg;
         lon = lon + lonAdd ;
-        var lonLat = [lon + dx/2, lat + dy/2];
+        var lonLat = [lon , lat];
         var coord = ol.proj.fromLonLat(lonLat);
         var val = getVal(lonLat);
         _features.push(new ol.Feature({
@@ -160,7 +160,7 @@
     ctx.drawImage(img, 0, 0);
     imgPixels = ctx.getImageData(0, 0, width, height);
 
-    var image = ctx.createImageData(width, height);
+    /*var image = ctx.createImageData(width, height);
     // canvas先绘制行，在绘制列
     for(var j = 0;j<height;j++){
       for(var i = 0;i<width;i++){
@@ -181,7 +181,7 @@
       url: canvas.toDataURL("image/png"),
       imageExtent: bounds
     });
-    imageLayer.setSource(source);
+    imageLayer.setSource(source);*/
   };
 
   function getVal(geoPt) {
