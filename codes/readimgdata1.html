@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map"></div>
+<div id="popup"></div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  var vec_w = getWmsLayer("light");
+  var geoBounds = [70, 15, 140, 60];
+  var imgPixels = [];
+  var width = 0,
+    height = 0,
+    dx = 0,
+    dy = 0;
+  var bounds = ol.proj.transformExtent(geoBounds, 'EPSG:4326',"EPSG:3857");
+  map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+  var popup = new ol.Overlay({
+    element: document.getElementById('popup'),
+    position: null,
+    positioning: 'center-left',
+    offset: [16, 0]
+  });
+  map.addOverlay(popup);
+  addLegend();
+  var intervalPixel = 100;
+  map.on('pointermove', function (e) {
+    var geoPt = ol.proj.toLonLat(e.coordinate);
+    var val = getVal(geoPt);
+    if(val) {
+      document.getElementById('popup').innerText = val.toFixed(1);
+      popup.setPosition(e.coordinate);
+    } else  {
+      popup.setPosition(null);
+    }
+  });
+
+  map.on("moveend", function () {
+    _source.clear();
+    var mapExtent3857 = map.getView().calculateExtent();
+    var topLeft3857 = [mapExtent3857[0], mapExtent3857[3]];
+    var topLeftPixel = map.getPixelFromCoordinate(topLeft3857);
+    var topLeftOffsetPixel = [topLeftPixel[0] + intervalPixel, topLeftPixel[1]];
+    var topLeftOffset3857 = map.getCoordinateFromPixel(topLeftOffsetPixel);
+    var topLeftOffset = ol.proj.toLonLat(topLeftOffset3857);
+    var mapExtent4326 = ol.proj.transformExtent(mapExtent3857, 'EPSG:3857', 'EPSG:4326');
+    var topLeft4326 = [mapExtent4326[0], mapExtent4326[3]];
+    var intervalDeg = topLeftOffset[0] - topLeft4326[0];
+    // 计算经纬度间隔
+    intervalDeg = intervalDeg < dx ? dx : intervalDeg;
+
+    var bottomRight4326 = [mapExtent4326[2], mapExtent4326[1]];
+    var dBottomRight4326 = [geoBounds[2], geoBounds[1]];
+    var dTopLeft4326 = [geoBounds[0] + dx, geoBounds[3] - dy];
+    var xIndexMin = topLeft4326[0] < dTopLeft4326[0] ?
+      0 : Math.floor((topLeft4326[0] - dTopLeft4326[0])/intervalDeg);
+    var xIndexMax = bottomRight4326[0] > dBottomRight4326[0] ?
+      Math.round((dBottomRight4326[0] - dTopLeft4326[0])/intervalDeg):
+      Math.round((bottomRight4326[0] - dTopLeft4326[0])/intervalDeg);
+    xIndexMin = xIndexMin > 0 ? xIndexMin - 1 : 0;
+    xIndexMax++;
+    
+    var yIndexMin = topLeft4326[1] > dTopLeft4326[1] ?
+      0 : Math.floor((dTopLeft4326[1] - topLeft4326[1])/intervalDeg);
+    var yIndexMax = bottomRight4326[1] > dBottomRight4326[1] ?
+      Math.round((dTopLeft4326[1] - dBottomRight4326[1])/intervalDeg):
+      Math.round((dTopLeft4326[1] - bottomRight4326[1])/intervalDeg);
+    yIndexMin = yIndexMin > 0 ? yIndexMin - 1 : 0;
+    yIndexMax++;
+    
+    // 从最上面开始，逐行做循环
+    var _features = [];
+    for(var j = yIndexMin; j <= yIndexMax * 2; j++) {
+      var lat = dTopLeft4326[1] - j * intervalDeg / 2;
+      var lonAdd = j%2 !==0 ? intervalDeg / 2 : 0;
+      for(var i = xIndexMin; i<=xIndexMax;i++) {
+        var lon = dTopLeft4326[0] + i * intervalDeg;
+        lon = lon + lonAdd ;
+        var lonLat = [lon + dx/2, lat + dy/2];
+        var coord = ol.proj.fromLonLat(lonLat);
+        var val = getVal(lonLat);
+        _features.push(new ol.Feature({
+          geometry: new ol.geom.Point(coord),
+          val: val
+        }));
+      }
+    }
+    _source.addFeatures(_features);
+  });
+
+
+  var imageLayer = new ol.layer.Image({
+    source: null,
+    opacity: 0.85
+  });
+  map.addLayer(imageLayer);
+
+  var textLayer = new ol.layer.Vector({
+    source: null,
+    opacity: 0.85,
+    style: function (feat) {
+      var val = feat.get("val");
+      if(val) {
+        return new ol.style.Style({
+          text: new ol.style.Text({
+            font: 'normal 14px 黑体',
+            text: val.toFixed(1),
+            fill: new ol.style.Fill({
+              color: '#ff0000'
+            }),
+            stroke: new ol.style.Stroke({
+              color: '#ffff',
+              width: 2
+            })
+          })
+        })
+      } else {
+        return null;
+      }
+
+    }
+  });
+  map.addLayer(textLayer);
+  var _source = new ol.source.Vector({
+    features: []
+  });
+  textLayer.setSource(_source);
+
+  var img = new Image();
+  img.src = 'css/ws_china.png';
+  img.onload = function () {
+    var canvas = document.createElement('canvas');
+    width = img.width;
+    height = img.height;
+    dx = (geoBounds[2] - geoBounds[0])/width;
+    dy = (geoBounds[3] - geoBounds[1])/height;
+    canvas.height = height;
+    canvas.width = width;
+    document.body.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    imgPixels = ctx.getImageData(0, 0, width, height);
+
+    var image = ctx.createImageData(width, height);
+    // canvas先绘制行，在绘制列
+    for(var j = 0;j<height;j++){
+      for(var i = 0;i<width;i++){
+        var _ji = (j * 4) * width + i * 4;
+        var r = imgPixels.data[_ji], g = imgPixels.data[_ji+1] ,b = imgPixels.data[_ji+2];
+        var val = r * 256 + g + b * 0.01;
+        val = Number(val.toFixed(2));
+        var c = getColor(val);
+        image.data[_ji + 0] = parseInt(c[0]);
+        image.data[_ji + 1] = parseInt(c[1]);
+        image.data[_ji + 2] = parseInt(c[2]);
+        image.data[_ji + 3] = val === 0 ? 0 : parseInt(c[3]);
+      }
+    }
+    ctx.putImageData(image, 0, 0);
+
+    var source = new ol.source.ImageStatic({
+      url: canvas.toDataURL("image/png"),
+      imageExtent: bounds
+    });
+    imageLayer.setSource(source);
+  };
+
+  function getVal(geoPt) {
+    var x = parseInt((geoPt[0] - geoBounds[0]) / dx),
+      y = parseInt((geoBounds[3] - geoPt[1]) / dy);
+    if(x >= 0 && y >= 0 && x < width && y < height) {
+      var _ji = (y * 4) * width + x * 4;
+      if (imgPixels.data[_ji + 2]) {
+        var r = imgPixels.data[_ji], g = imgPixels.data[_ji + 1], b = imgPixels.data[_ji + 2];
+        var val = r * 256 + g + b * 0.01;
+        return val;
+      }
+    }
+  }
+</script>
+</body>
+</html>
