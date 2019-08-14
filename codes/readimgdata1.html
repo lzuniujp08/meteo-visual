@@ -70,7 +70,7 @@
 
     var bottomRight4326 = [mapExtent4326[2], mapExtent4326[1]];
     var dBottomRight4326 = [geoBounds[2], geoBounds[1]];
-    var dTopLeft4326 = [geoBounds[0] + dx/2, geoBounds[3] - dy/2];
+    var dTopLeft4326 = [geoBounds[0], geoBounds[3]];
     var xIndexMin = topLeft4326[0] < dTopLeft4326[0] ?
       0 : Math.floor((topLeft4326[0] - dTopLeft4326[0])/intervalDeg);
     var xIndexMax = bottomRight4326[0] > dBottomRight4326[0] ?
@@ -95,7 +95,7 @@
       for(var i = xIndexMin; i<=xIndexMax;i++) {
         var lon = dTopLeft4326[0] + i * intervalDeg;
         lon = lon + lonAdd ;
-        var lonLat = [lon , lat];
+        var lonLat = [lon, lat + dy/2];
         var coord = ol.proj.fromLonLat(lonLat);
         var val = getVal(lonLat);
         _features.push(new ol.Feature({
