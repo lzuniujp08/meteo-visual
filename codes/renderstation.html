@@ -114,6 +114,10 @@
 
   function canvasFunction(extent, res, pixelRatio, size) {
     var mapSize = map.getSize();
+    var zoom = map.getView().getZoom();
+    r = zoom * 0.6;
+    r = r<3 ? 3: r;
+    r = r > 10 ? 10: r;
     var xOff = (size[0] - mapSize[0]) / 2,
       yOff = (size[1] - mapSize[1]) / 2;
     var canvas = document.createElement('canvas');
