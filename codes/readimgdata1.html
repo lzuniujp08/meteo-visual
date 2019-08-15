@@ -67,6 +67,7 @@
     var intervalDeg = topLeftOffset[0] - topLeft4326[0];
     // 计算经纬度间隔
     intervalDeg = intervalDeg < dx ? dx : intervalDeg;
+    var halfInterval = intervalDeg / 2;
 
     var bottomRight4326 = [mapExtent4326[2], mapExtent4326[1]];
     var dBottomRight4326 = [geoBounds[2], geoBounds[1]];
@@ -78,24 +79,28 @@
       Math.round((bottomRight4326[0] - dTopLeft4326[0])/intervalDeg);
     xIndexMin = xIndexMin > 0 ? xIndexMin - 1 : 0;
     xIndexMax++;
-    
-    var yIndexMin = topLeft4326[1] > dTopLeft4326[1] ?
-      0 : Math.floor((dTopLeft4326[1] - topLeft4326[1])/intervalDeg);
-    var yIndexMax = bottomRight4326[1] > dBottomRight4326[1] ?
-      Math.round((dTopLeft4326[1] - dBottomRight4326[1])/intervalDeg):
-      Math.round((dTopLeft4326[1] - bottomRight4326[1])/intervalDeg);
+
+    var yIndexMin =
+      topLeft4326[1] < dTopLeft4326[1]
+        ? Math.floor((dTopLeft4326[1] - topLeft4326[1]) / halfInterval)
+        : 0;
+    var yIndexMax =
+      bottomRight4326[1] > dBottomRight4326[1]
+        ? Math.round((dTopLeft4326[1] - bottomRight4326[1]) / halfInterval)
+        : Math.round(
+        (dTopLeft4326[1] - dBottomRight4326[1]) / halfInterval
+        );
     yIndexMin = yIndexMin > 0 ? yIndexMin - 1 : 0;
     yIndexMax++;
-    
     // 从最上面开始，逐行做循环
     var _features = [];
-    for(var j = yIndexMin; j <= yIndexMax * 2; j++) {
+    for(var j = yIndexMin; j <= yIndexMax * 2 - yIndexMin; j++) {
       var lat = dTopLeft4326[1] - j * intervalDeg / 2;
       var lonAdd = j%2 !==0 ? intervalDeg / 2 : 0;
       for(var i = xIndexMin; i<=xIndexMax;i++) {
         var lon = dTopLeft4326[0] + i * intervalDeg;
         lon = lon + lonAdd ;
-        var lonLat = [lon, lat + dy/2];
+        var lonLat = [lon + dx/2, lat - dy/2];
         var coord = ol.proj.fromLonLat(lonLat);
         var val = getVal(lonLat);
         _features.push(new ol.Feature({
