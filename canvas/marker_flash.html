@@ -14,6 +14,7 @@
   </style>
 <body>
 <canvas width="600" height="800" id="c1"></canvas>
+<script src="utils/gradCircle.js"></script>
 <script>
   var pos = [
     [200, 400],
@@ -24,8 +25,9 @@
   var radius = 20;
   var canvas = document.getElementById('c1');
   var ctx = canvas.getContext('2d');
-
-  drawGradientCircle();
+  var gradCircle = new GradCircle(ctx);
+  
+  playGradientCircle();
 
   window.requestAnimationFrame =(
     window.webkitRequestAnimationFrame||
@@ -37,25 +39,14 @@
     }
   );
   
-  function drawGradientCircle() {
-    window.requestAnimationFrame(drawGradientCircle);
+  function playGradientCircle() {
+    window.requestAnimationFrame(playGradientCircle);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // x0:, y0:, r0:, x1:, y1:, r1:
     for(var i = 0;i<pos.length;i++) {
       var x = pos[i][0],
         y = pos[i][1];
-      ctx.beginPath();
-      var grad = ctx.createRadialGradient(x, y, 0, x, y, radius/2);
-      grad.addColorStop(0,'rgb(255, 0, 0)');
-      grad.addColorStop(1,'rgba(0,0,255,0)');
-      ctx.fillStyle = grad;
-      ctx.rect(x - radius/2 ,y - radius/2, x+radius/2, y+ radius/2);
-      ctx.fill();
-      // ctx.beginPath();
-      // ctx.arc(x, y, radius/2 , 0, Math.PI * 2);
-      // ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-      // ctx.strokeWidth = 1;
-      // ctx.stroke();
+      gradCircle.drawGradCircle(x, y, radius);
     }
     radius = radius + 0.3;
     if(radius > 40) radius = 20;

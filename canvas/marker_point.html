@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    body{
+      margin: 0;
+      padding: 0;
+    }
+    html,body{
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+<body>
+<canvas width="600" height="800" id="c1"></canvas>
+<script src="utils/gradCircle.js"></script>
+<script>
+  var pos = [
+    [100, 120],
+    [100, 100],
+    [120, 100],
+    [120, 120],
+  ];
+  var radius = 40;
+  var canvas = document.getElementById('c1');
+  var ctx = canvas.getContext('2d');
+  var gradCircle = new GradCircle(ctx);
+
+  for(var i = 0;i<pos.length;i++) {
+    var x = pos[i][0],
+      y = pos[i][1];
+    gradCircle.drawGradCircle(x, y, radius);
+  }
+</script>
+</body>
+</html>
