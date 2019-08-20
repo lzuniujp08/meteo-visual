@@ -14,7 +14,8 @@ html, body, #map {
   background-color: white;
   padding: 10px;
   margin: 0;
-  list-style: none; }
+  list-style: none;
+  cursor: not-allowed; }
   #legend li span {
     display: inline-block;
     width: 25px;
