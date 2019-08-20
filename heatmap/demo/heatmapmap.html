@@ -61,7 +61,6 @@
     var canvas = document.createElement('canvas');
     canvas.setAttribute("width", header.nx);
     canvas.setAttribute("height", header.ny);
-    console.log(datas);
     var heat = simpleheat(canvas).data(datas).max(max);
     // heat.gradient(
     //   {
