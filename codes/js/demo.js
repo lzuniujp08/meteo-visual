@@ -16,6 +16,35 @@ var colorMap = [
     lable: '8~10'
   }
 ];
+
+var colorDict = [{"id":"c3bbf88a14404a3ebae7c9ebfbf44ce5","legendCode":"hspt_tem","color":"0,0,153,255","lable":"<=-30","sortBy":0,"projectCode":null},{"id":"401bf219940d41f99fd0f3780a4745e5","legendCode":"hspt_tem","color":"0,0,255,255","lable":"-30~-25","sortBy":1,"projectCode":null},{"id":"b7a369cfa95e4c5796c83ead1688c369","legendCode":"hspt_tem","color":"0,102,255,255","lable":"-25~-20","sortBy":2,"projectCode":null},{"id":"9fe46a8b7e514ed4bdfd7e987b6f9150","legendCode":"hspt_tem","color":"51,153,255,255","lable":"-20~-15","sortBy":3,"projectCode":null},{"id":"fba0258a8375432ba3367418a29aceb2","legendCode":"hspt_tem","color":"0,204,255,255","lable":"-15~-10","sortBy":4,"projectCode":null},{"id":"8423c8fbbab041629cc127450093789f","legendCode":"hspt_tem","color":"0,255,255,255","lable":"-10~-5","sortBy":5,"projectCode":null},{"id":"88d1883ee0a34d97b5e4fc8c4adff3e9","legendCode":"hspt_tem","color":"153,255,255,255","lable":"-5~0","sortBy":6,"projectCode":null},{"id":"4566bdf704b14f3a8ead6ea231667d42","legendCode":"hspt_tem","color":"0,255,0,255","lable":"0~5","sortBy":7,"projectCode":null},{"id":"e4fedaa99f7a47f3adf6b816a16f37a4","legendCode":"hspt_tem","color":"153,255,102,255","lable":"5~10","sortBy":8,"projectCode":null},{"id":"dd5f77e1b620471d82699437b906c763","legendCode":"hspt_tem","color":"204,255,51,255","lable":"10~15","sortBy":9,"projectCode":null},{"id":"56a6878003ab4dfe88261c879bd196f2","legendCode":"hspt_tem","color":"255,255,0,255","lable":"15~20","sortBy":10,"projectCode":null},{"id":"1cc01a6276494936b8c076df5a68a02b","legendCode":"hspt_tem","color":"255,204,0,255","lable":"20~25","sortBy":11,"projectCode":null},{"id":"38cc1002b645443aa7d546050c156f4c","legendCode":"hspt_tem","color":"255,153,0,255","lable":"25~30","sortBy":12,"projectCode":null},{"id":"fb5ede56006e49b384c68897a1be871f","legendCode":"hspt_tem","color":"255,102,0,255","lable":"30~35","sortBy":13,"projectCode":null},{"id":"726f0b7ec0a64973849b4f28bc130041","legendCode":"hspt_tem","color":"255,0,0,255","lable":"35~37","sortBy":14,"projectCode":null},{"id":"02d4e94bd51b4782953f3b63717c36fb","legendCode":"hspt_tem","color":"183,0,0,255","lable":"37~39","sortBy":15,"projectCode":null},{"id":"b4793224e7174866a71572bbe2fb915a","legendCode":"hspt_tem","color":"255,0,153,255","lable":"39~41","sortBy":16,"projectCode":null},{"id":"4afedc05077849b3bf6daaa6254c8e19","legendCode":"hspt_tem","color":"204,0,255,255","lable":"41~43","sortBy":17,"projectCode":null},{"id":"ab0c78ae293a47baa94b61a078db18c8","legendCode":"hspt_tem","color":"153,0,204,255","lable":"43~45","sortBy":18,"projectCode":null},{"id":"5725a95411414b2985176f74af4f236a","legendCode":"hspt_tem","color":"102,0,102,255","lable":">=45","sortBy":19,"projectCode":null}];
+function getTemColor(val) {
+  for(var i = 0;i<colorDict.length;i++) {
+    var c = colorDict[i];
+    if(c.lable.indexOf('~')!==-1) {
+      var vals = c.lable.split('~').map(Number);
+      var min = vals[0],
+        max = vals[1];
+      if(val >= min && val <= max) {
+        return c.color.split(",");
+      }
+    }
+    else if(c.lable.indexOf('>')!==-1) {
+      var min = Number(c.lable.replace(/[^0-9]/ig,""));
+      if(val >= min) {
+        return c.color.split(",");
+      }
+    }
+    else {
+      var max = Number(c.lable.replace(/[^0-9]/ig,""));
+      if(c.lable.indexOf('-') !== -1) max = -max;
+      if(val <= max) {
+        return c.color.split(",");
+      }
+    }
+  }
+}
+
 function getColor(ws) {
   for(var i = 0;i<colorMap.length;i++) {
     var color = colorMap[i];
@@ -27,7 +56,7 @@ function getColor(ws) {
   }
 }
 
-function addLegend() {
+function addLegend(colorMap) {
   var legendDom = document.createElement("div");
   legendDom.setAttribute('id', 'legend');
   document.body.appendChild(legendDom);

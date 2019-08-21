@@ -33,6 +33,8 @@
     });
     map.addLayer(imageLayer);
     
+    addLegend(colorDict);
+    
     function getPalette() {
         var canvas = document.createElement("canvas");
         var ctx = canvas.getContext('2d');
@@ -55,7 +57,7 @@
     var palette = getPalette();
 
     var img = new Image();
-    img.src = 'css/ws_china.png';
+    img.src = 'css/tem_china.png';
     img.onload = function () {
         var width = img.width,
           height = img.height;
@@ -83,9 +85,11 @@
             for(var i = 0;i<width;i++){
                 var _ji = (j * 4) * width + i * 4;
                 var r = imgPixels.data[_ji],
-                  g = imgPixels.data[_ji+1] ,
-                  b = imgPixels.data[_ji+2];
-                var val = r * 256 + g + b * 0.01;
+                  g = imgPixels.data[_ji + 1] ,
+                  b = imgPixels.data[_ji + 2],
+                  a = imgPixels.data[_ji + 3];
+                let hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                let val = parseInt(hex, 16) * (a - 254) * 0.01;
                 val = parseFloat(val.toFixed(3));
                 data.data.push(val);
                 data.max = data.max < val ? val: data.max;
@@ -97,11 +101,12 @@
             for (var i = 0; i < width; i++) {
                 var k = j * width + i;
                 var val = data.data[k];
-                var radio =(val - data.min) / (data.max - data.min);
-                image.data[4 * k] = palette[Math.floor(radio*255+1)*4-4];
-                image.data[4 * k + 1] = palette[Math.floor(radio*255+1)*4-3];
-                image.data[4 * k + 2] = palette[Math.floor(radio*255+1)*4-2];
-                image.data[4 * k + 3] = val === 0 ? 0 : 255;
+                var c = getTemColor(val);
+                var _ji = (j * 4) * width + i * 4;
+                image.data[_ji + 0] = parseInt(c[0]);
+                image.data[_ji + 1] = parseInt(c[1]);
+                image.data[_ji + 2] = parseInt(c[2]);
+                image.data[_ji + 3] = parseInt(c[3]);
             }
         }
         context.putImageData(image, 0, 0);
