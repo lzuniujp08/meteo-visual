@@ -1,19 +1,19 @@
 var colorMap = [
   {
     color: '77,119,176,255',
-    lable: '0~5'
+    lable: '0~2'
   },
   {
     color: '78,153,164,255',
-    lable: '5~10'
+    lable: '2~4'
   },
   {
     color: '77,164, 87,255',
-    lable: '10~20'
+    lable: '4~8'
   },
   {
     color: '175,170,75,255',
-    lable: '20~30'
+    lable: '8~10'
   }
 ];
 function getColor(ws) {
@@ -88,7 +88,8 @@ function getWmsLayer() {
         STYLES: '',
         LAYERS: 'world:base_province',
       }
-    })
+    }),
+    zIndex: 2
   });
   return wms;
 }
