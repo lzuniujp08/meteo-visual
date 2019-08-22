@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    canvas{
+      background:#eee;
+    }
+  </style>
+  <title>星星</title>
+  <meta charset="utf-8">
+</head>
+<body>
+<canvas id="canvas" width=500 height=500></canvas>
+<!--<script>
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext("2d");
+
+  drawLightn(100, 100);
+  drawLightn(200, 200);
+  
+  function drawLightn(x, y) {
+    var off = 3;
+    var offx = 6;
+    var offy = 12;
+    ctx.beginPath();
+    ctx.moveTo(x, y + off);
+    ctx.lineTo(x + offx, y + off);
+    ctx.lineTo(x, y - offy);
+    ctx.lineTo(x, y - off);
+    ctx.lineTo(x - offx, y - off);
+    ctx.lineTo(x, y + offy);
+    ctx.closePath();
+    ctx.fillStyle = '#debe5c';
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.strokeWidth = 1;
+    ctx.stroke();
+  }
+</script>-->
+<script>
+  window.onload=function  () {
+    var canvas=document.getElementById("canvas");
+    var cobj=canvas.getContext("2d");
+    var starArr=[];
+    for (var i=0; i<30; i++) {
+      var starObj={
+        x:30+(canvas.width-60)*Math.random(),
+        y:30+(canvas.height-60)*Math.random(),
+        angle: 100,
+        changeAngle: 4
+      }
+      starArr.push(starObj);
+    }
+
+    window.requestAnimationFrame =(
+      window.webkitRequestAnimationFrame||
+      window.mozRequestAnimationFrame||
+      window.oRequestAnimationFrame||
+      window.msRequestAnimationFrame||
+      function(callback){
+        return window.setTimeout(callback,1000/60);
+      }
+    );
+    
+    animateLightn();
+    function animateLightn() {
+      window.requestAnimationFrame(animateLightn);
+      cobj.clearRect(0,0,500,500);
+      for (var i=0; i<starArr.length; i++) {
+        starArr[i].angle+=starArr[i].changeAngle;
+        cobj.save();
+        cobj.beginPath();
+        cobj.translate(starArr[i].x,starArr[i].y);
+        cobj.scale(Math.sin(starArr[i].angle*Math.PI/180),Math.sin(starArr[i].angle*Math.PI/180))
+        cobj.globalAlpha=Math.abs(Math.sin(starArr[i].angle*Math.PI/180));
+        drawLightn(0, 0);
+        cobj.restore();
+      }
+    }
+
+    function drawLightn(x, y) {
+      var off = 3;
+      var offx = 6;
+      var offy = 12;
+      cobj.beginPath();
+      cobj.moveTo(x, y + off);
+      cobj.lineTo(x + offx, y + off);
+      cobj.lineTo(x, y - offy);
+      cobj.lineTo(x, y - off);
+      cobj.lineTo(x - offx, y - off);
+      cobj.lineTo(x, y + offy);
+      cobj.closePath();
+      cobj.fillStyle = '#debe5c';
+      cobj.fill();
+      cobj.strokeStyle = '#000';
+      cobj.strokeWidth = 1;
+      cobj.stroke();
+    }
+  }
+</script>
+</body>
+</html>
