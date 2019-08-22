@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map"></div>
+<div id="popup"></div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  var vec_w = getWmsLayer("light");
+  var data = [];
+  var chinaB = [60, 0, 140, 55];
+  var deltLon = 8,
+    deltLat = 5.5;
+  var numLon = (chinaB[2] - chinaB[0]) / deltLon,
+    numLat = (chinaB[3] - chinaB[1]) / deltLat;
+  var dataCache = [];
+  // 数据从左下角开始
+  for(var j =0;j<numLat;j++) {
+    var maxLat = chinaB[1] + (j+1)*deltLat,
+      minLat = chinaB[1] + j*deltLat;
+    for(var i =0;i<numLon;i++) {
+      var maxLon = chinaB[0] + (i+1)*numLon,
+        minLon = chinaB[0] + i*numLon;
+      var dCache = {
+        xmin: minLon,
+        xmax: maxLon,
+        ymin: minLat,
+        yMax: maxLat,
+        data: []
+      };
+      dataCache.push(dCache);
+    }
+  }
+  var r = 3;
+  var map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+
+  var popup = new ol.Overlay({
+    element: document.getElementById('popup'),
+    position: null,
+    positioning: 'center-left',
+    offset: [16, 0]
+  });
+  map.addOverlay(popup);
+
+  var imageLayer = new ol.layer.Image({
+    source: null,
+    opacity: 0.85
+  });
+  map.addLayer(imageLayer);
+  
+  map.on('click', function (e) {
+    var coord = e.coordinate;
+    var res = map.getView().getResolution();
+    var _radius = res * r;
+    var _circle = new ol.geom.Circle(coord, _radius);
+    var lonlat = ol.proj.toLonLat(coord);
+    var index = getLonLatIndex(lonlat[0], lonlat[1]);
+    if(index !== -1) {
+      var data = dataCache[index].data;
+      for (var i = 0; i < data.length; i++) {
+        var d = data[i];
+        var _coord = ol.proj.fromLonLat([d.lon, d.lat]);
+        if (_circle.intersectsCoordinate(_coord)) {
+          console.log(d);
+          break;
+        }
+      }
+    }
+  });
+
+  map.on('moveend', function () {
+    renderStation();
+  });
+  
+  map.on('pointermove', function (e) {
+    var coord = e.coordinate;
+    var res = map.getView().getResolution();
+    var _radius = res * r;
+    var _circle = new ol.geom.Circle(coord, _radius);
+    var lonlat = ol.proj.toLonLat(coord);
+    var index = getLonLatIndex(lonlat[0], lonlat[1]);
+    if(index !== -1) {
+      var data = dataCache[index].data;
+      for (var i = 0; i < data.length; i++) {
+        var d = data[i];
+        var _coord = ol.proj.fromLonLat([d.lon, d.lat]);
+        if (_circle.intersectsCoordinate(_coord)) {
+          map.getTargetElement().style.cursor = 'pointer';
+          document.getElementById('popup').innerText = d.n;
+          popup.setPosition(_coord);
+          break;
+        } else {
+          map.getTargetElement().style.cursor = 'default';
+          popup.setPosition(null);
+        }
+      }
+    }
+  });
+
+  function renderStation() {
+    var mapSize = map.getSize();
+    var zoom = map.getView().getZoom();
+    var extent = map.getView().calculateExtent();
+    r = zoom * 0.6;
+    r = r<3 ? 3: r;
+    r = r > 10 ? 10: r;
+    var canvas = document.createElement('canvas');
+    canvas.setAttribute('width', mapSize[0]);
+    canvas.setAttribute('height', mapSize[1]);
+    var ctx = canvas.getContext('2d');
+    for(var i = 0;i<data.length;i++) {
+      var d = data[i];
+      var coord = ol.proj.fromLonLat([d["lon"], d["lat"]]);
+      if(ol.extent.containsCoordinate(extent, coord)) {
+        ctx.fillStyle = getValueColor(d["pre_1h"]);
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.strokeWidth = 1;
+        ctx.beginPath();
+        var pixel = map.getPixelFromCoordinate(coord);
+        // x, y, r, start, end
+        var x = pixel[0],
+          y = pixel[1];
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+    var source = new ol.source.ImageStatic({
+      url: canvas.toDataURL("image/png"),
+      imageExtent: extent
+    });
+    imageLayer.setSource(source);
+  }
+  
+  function getLonLatIndex(lon, lat) {
+    var index = -1;
+    // 在边界内
+    if(ol.extent.containsCoordinate(chinaB, [lon, lat])) {
+      var idxX = (lon - chinaB[0]) / deltLon,
+        idxY = (lat - chinaB[1]) / deltLat;
+      index = Math.floor(idxY) * numLon + Math.floor(idxX);
+    }
+    return index;
+  }
+
+  function randomNum(minNum,maxNum){
+    switch(arguments.length){
+      case 1:
+        return parseFloat(Math.random()*minNum+1,10);
+      case 2:
+        return parseFloat(Math.random()*(maxNum-minNum+1)+minNum,10);
+      default:
+        return 0;
+    }
+  }
+  
+  $.get("datas/data.json", (res) => {
+    data = res.data;
+    for(var i = 0;i<data.length;i++) {
+      var d = data[i];
+      var idx = getLonLatIndex(d.lon, d.lat);
+      if(idx !== -1) {
+        dataCache[idx].data.push(d);
+      }
+    }
+    renderStation();
+  })
+</script>
+</body>
+</html>
