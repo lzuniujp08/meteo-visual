@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map"></div>
+<div id="popup"></div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  var vec_w = getWmsLayer("light");
+  var data = [];
+  var map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+  var canvas = document.createElement('canvas');
+  var cobj = null;
+  var angle = 100,
+    changeAngle = 5;
+  
+  var imageLayer = new ol.layer.Image({
+    source: null,
+    opacity: 0.85
+  });
+  map.addLayer(imageLayer);
+  var source = new ol.source.ImageCanvas({
+    canvasFunction: canvasFunction
+  });
+  imageLayer.setSource(source);
+  var playFlag = null;
+  
+  function drawLightn(x, y) {
+    var off = 3;
+    var offx = 6;
+    var offy = 12;
+    cobj.beginPath();
+    cobj.moveTo(x, y + off);
+    cobj.lineTo(x + offx, y + off);
+    cobj.lineTo(x, y - offy);
+    cobj.lineTo(x, y - off);
+    cobj.lineTo(x - offx, y - off);
+    cobj.lineTo(x, y + offy);
+    cobj.closePath();
+    cobj.fillStyle = '#debe5c';
+    cobj.fill();
+    cobj.strokeStyle = '#000';
+    cobj.strokeWidth = 1;
+    cobj.stroke();
+  }
+
+  window.requestAnimationFrame =(
+    window.webkitRequestAnimationFrame||
+    window.mozRequestAnimationFrame||
+    window.oRequestAnimationFrame||
+    window.msRequestAnimationFrame||
+    function(callback){
+      return window.setTimeout(callback,1000/60);
+    }
+  );
+
+  function refresh() {
+    playFlag = window.requestAnimationFrame(refresh);
+    source.refresh();
+  }
+  
+  map.on('movestart', function () {
+    window.cancelAnimationFrame(playFlag);
+  });
+  map.on('moveend', function () {
+    refresh();
+  });
+  
+  function canvasFunction(extent, res, pixelRatio, size) {
+    canvas.setAttribute('width', size[0]);
+    canvas.setAttribute('height', size[1]);
+    cobj = canvas.getContext('2d');
+    cobj.clearRect(0, 0 , size[0], size[1]);
+    var mapSize = map.getSize();
+    var mapExtent = map.getView().calculateExtent();
+    var xOff = (size[0] - mapSize[0]) / 2 / pixelRatio,
+      yOff = (size[1] - mapSize[1]) / 2 / pixelRatio;
+    for(var i = 0;i<data.length;i++) {
+      var d = data[i];
+      var lonlat = d.geometry.coordinates;
+      var coord = ol.proj.fromLonLat(lonlat);
+      if(ol.extent.containsCoordinate(mapExtent, coord)) {
+        var pixel = map.getPixelFromCoordinate(coord);
+        d.properties.angle += changeAngle;
+        cobj.save();
+        cobj.beginPath();
+        var x = pixel[0] + xOff,
+          y = pixel[1] + yOff;
+        cobj.translate(x, y);
+        cobj.scale(Math.sin(d.properties.angle*Math.PI/180),Math.sin(d.properties.angle*Math.PI/180));
+        cobj.globalAlpha=Math.abs(Math.sin(d.properties.angle*Math.PI/180));
+        drawLightn(0, 0);
+        cobj.restore();
+      }
+    }
+    return canvas;
+  }
+
+  $.get("datas/light.json", (res) => {
+    data = res.features;
+    for(var i = 0;i<data.length;i++) {
+      var d = data[i];
+      d.properties.angle = angle;
+    }
+    refresh();
+  })
+</script>
+</body>
+</html>
