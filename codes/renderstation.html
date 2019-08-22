@@ -115,27 +115,32 @@
   function canvasFunction(extent, res, pixelRatio, size) {
     var mapSize = map.getSize();
     var zoom = map.getView().getZoom();
+    var mapExtent = map.getView().calculateExtent();
     r = zoom * 0.6;
     r = r<3 ? 3: r;
     r = r > 10 ? 10: r;
-    var xOff = (size[0] - mapSize[0]) / 2,
-      yOff = (size[1] - mapSize[1]) / 2;
+    var xOff = (size[0] - mapSize[0]) / 2 / pixelRatio,
+      yOff = (size[1] - mapSize[1]) / 2 / pixelRatio;
     var canvas = document.createElement('canvas');
     canvas.setAttribute('width', size[0]);
     canvas.setAttribute('height', size[1]);
     var ctx = canvas.getContext('2d');
     for(var i = 0;i<data.length;i++) {
       var d = data[i];
-      ctx.fillStyle = getValueColor(d["pre_1h"]);
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-      ctx.strokeWidth = 1;
-      ctx.beginPath();
       var coord = ol.proj.fromLonLat([d["lon"], d["lat"]]);
-      var pixel = map.getPixelFromCoordinate(coord);
-      // x, y, r, start, end
-      ctx.arc(pixel[0] + xOff, pixel[1] + yOff, r, 0, 2*Math.PI);
-      ctx.fill();
-      ctx.stroke();
+      if(ol.extent.containsCoordinate(mapExtent, coord)) {
+        ctx.fillStyle = getValueColor(d["pre_1h"]);
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.strokeWidth = 1;
+        ctx.beginPath();
+        var pixel = map.getPixelFromCoordinate(coord);
+        // x, y, r, start, end
+        var x = pixel[0] + xOff,
+          y = pixel[1] + yOff;
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      }
     }
     return canvas;
   }
