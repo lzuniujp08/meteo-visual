@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="css/demo.css" type="text/css">
 </head>
 <body>
-<div id="map"></div>
+<div id="map" style="background-color: #195f8c;"></div>
 <div id="popup"></div>
 <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
@@ -29,9 +29,9 @@
     })
   });
   var canvas = document.createElement('canvas');
-  var cobj = null;
+  var ctx = canvas.getContext('2d');
   var angle = 100,
-    changeAngle = 5;
+    changeAngle = 20;
   
   var imageLayer = new ol.layer.Image({
     source: null,
@@ -48,19 +48,21 @@
     var off = 3;
     var offx = 6;
     var offy = 12;
-    cobj.beginPath();
-    cobj.moveTo(x, y + off);
-    cobj.lineTo(x + offx, y + off);
-    cobj.lineTo(x, y - offy);
-    cobj.lineTo(x, y - off);
-    cobj.lineTo(x - offx, y - off);
-    cobj.lineTo(x, y + offy);
-    cobj.closePath();
-    cobj.fillStyle = '#debe5c';
-    cobj.fill();
-    cobj.strokeStyle = '#000';
-    cobj.strokeWidth = 1;
-    cobj.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y + off);
+    ctx.lineTo(x + offx, y + off);
+    ctx.lineTo(x, y - offy);
+    ctx.lineTo(x, y - off);
+    ctx.lineTo(x - offx, y - off);
+    ctx.lineTo(x, y + offy);
+    ctx.closePath();
+    ctx.fillStyle = '#debe5c';
+    ctx.shadowBlur = 2;
+    ctx.shadowColor="#ff0";
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeWidth = 1;
+    ctx.stroke();
   }
 
   window.requestAnimationFrame =(
@@ -82,18 +84,22 @@
     window.cancelAnimationFrame(playFlag);
   });
   map.on('moveend', function () {
-    refresh();
+    resetState();
   });
   
   function canvasFunction(extent, res, pixelRatio, size) {
     canvas.setAttribute('width', size[0]);
     canvas.setAttribute('height', size[1]);
-    cobj = canvas.getContext('2d');
-    cobj.clearRect(0, 0 , size[0], size[1]);
-    var mapSize = map.getSize();
+    ctx.clearRect(0, 0 , size[0], size[1]);
     var mapExtent = map.getView().calculateExtent();
-    var xOff = (size[0] - mapSize[0]) / 2 / pixelRatio,
-      yOff = (size[1] - mapSize[1]) / 2 / pixelRatio;
+    var mapTopLeft = [mapExtent[0], mapExtent[3]];
+    var topLeft = [extent[0], extent[3]];
+    var tlSrc = map.getPixelFromCoordinate(topLeft);
+    var tlMapSrc = map.getPixelFromCoordinate(mapTopLeft);
+    var xOff = tlMapSrc[0] - tlSrc[0],
+      yOff = tlMapSrc[1] - tlSrc[1];
+    //浏览器存在多方的状态下
+    ctx.scale(pixelRatio, pixelRatio);
     for(var i = 0;i<data.length;i++) {
       var d = data[i];
       var lonlat = d.geometry.coordinates;
@@ -101,27 +107,31 @@
       if(ol.extent.containsCoordinate(mapExtent, coord)) {
         var pixel = map.getPixelFromCoordinate(coord);
         d.properties.angle += changeAngle;
-        cobj.save();
-        cobj.beginPath();
+        ctx.save();
+        ctx.beginPath();
         var x = pixel[0] + xOff,
           y = pixel[1] + yOff;
-        cobj.translate(x, y);
-        cobj.scale(Math.sin(d.properties.angle*Math.PI/180),Math.sin(d.properties.angle*Math.PI/180));
-        cobj.globalAlpha=Math.abs(Math.sin(d.properties.angle*Math.PI/180));
+        ctx.translate(x, y);
+        ctx.scale(Math.sin(d.properties.angle*Math.PI/180),Math.sin(d.properties.angle*Math.PI/180));
+        ctx.globalAlpha = Math.abs(Math.sin(d.properties.angle*Math.PI/180));
         drawLightn(0, 0);
-        cobj.restore();
+        ctx.restore();
       }
     }
     return canvas;
   }
 
-  $.get("datas/light.json", (res) => {
-    data = res.features;
+  function resetState(){
     for(var i = 0;i<data.length;i++) {
       var d = data[i];
       d.properties.angle = angle;
     }
     refresh();
+  }
+  
+  $.get("datas/light.json", (res) => {
+    data = res.features;
+    resetState();
   })
 </script>
 </body>
