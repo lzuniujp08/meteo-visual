@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>WMS without Projection</title>
+		<link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+		<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+		<style>
+			html,
+			body,
+			#map {
+				height: 100%;
+				overflow: hidden;
+				padding: 0;
+				margin: 0;
+				width: 100%;
+				font-size: 13px;
+			}
+			.params {
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				z-index: 9;
+				background: white;
+				padding: 10px;
+				border-radius: 4px;
+				box-shadow: 1px 1px 2px #ccc;
+				list-style: none;
+				margin: 0;
+				overflow: hidden;
+			}
+			.params li {
+				height: 30px;
+				line-height: 30px;
+			}
+			.params .value {
+				width: 40px;
+				display: inline-block;
+				text-align: left;
+			}
+			.params .slider {
+				width: 200px;
+				display: inline-block;
+				margin-right: 10px;
+			}
+		</style>
+		<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+		<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	</head>
+	<body>
+		<ul class="params">
+			<li>
+				<label>半径值：</label>
+				<div id="vradius" class="value">5</div>
+				<div class="slider" id="radius"></div>
+			</li>
+			<li>
+				<label>模糊值：</label>
+				<div id="vblur" class="value">20</div>
+				<div class="slider" id="blur"></div>
+			</li>
+			<li>
+				<label>透明度：</label>
+				<div id="vopacity" class="value">100</div>
+				<div class="slider" id="opacity"></div>
+			</li>
+		</ul>
+		<div id="map" class="map"></div>
+		<script>
+			var url = "http://localhost:6080/arcgis/services/shanghai/MapServer/WMSServer";
+			var lyr = '0,1,2,3,4,5,6,7,8,9';
+			var layers = [
+				new ol.layer.Image({
+					source: new ol.source.ImageWMS({
+						url: url,
+						params: {
+							'LAYERS': lyr
+						}
+					})
+				}),
+			];
+			var projection = new ol.proj.Projection({
+				code: 'EPSG:21781',
+				units: 'm'
+			});
+			var center = [2744.583340315541, -3511.3829423630796];
+			var map = new ol.Map({
+				controls: ol.control.defaults({
+					attribution: false,
+					zoom: false
+				}),
+				layers: layers,
+				target: 'map',
+				view: new ol.View({
+					center: center,
+					projection: projection,
+					zoom: 9
+				})
+			});
+			var vectorSource = new ol.source.Vector({
+				url: "data/data.geojson",
+				format: new ol.format.GeoJSON()
+			});
+			var heatmap = new ol.layer.Heatmap({
+				source: vectorSource,
+				blur: 20,
+				radius: 5,
+				opacity: 1
+			});
+			map.addLayer(heatmap);
+
+			$("#radius").slider({
+				min: 0,
+				max: 100,
+				step: 1,
+				value: 5,
+				slide: function(event, ui) {
+					heatmap.setRadius(ui.value);
+					$("#vradius").html(ui.value);
+				}
+			});
+			$("#blur").slider({
+				min: 0,
+				max: 100,
+				step: 1,
+				value: 20,
+				slide: function(event, ui) {
+					heatmap.setBlur(ui.value);
+					$("#vblur").html(ui.value);
+				}
+			});
+			$("#opacity").slider({
+				min: 0,
+				max: 100,
+				step: 1,
+				value: 100,
+				slide: function(event, ui) {
+					heatmap.setOpacity(ui.value / 100);
+					$("#vopacity").html(ui.value);
+				}
+			});
+		</script>
+	</body>
+</html>
