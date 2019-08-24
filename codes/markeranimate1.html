@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map"></div>
+<div class="animate-overlay"></div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  var vec_w = getWmsLayer("light");
+  var map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+
+  var data = [
+    {"name": "乌鲁木齐", "id": 10.000000, "lon": 87.576079, "lat": 43.782225, "angle": null},
+    {"name": "拉萨", "id": 11.000000, "lon": 91.163218, "lat": 29.710560, "angle": null},
+    {"name": "西宁", "id": 12.000000, "lon": 101.797439, "lat": 36.593725, "angle": null},
+    {"name": "兰州", "id": 13.000000, "lon": 103.584421, "lat": 36.119175, "angle": null},
+    {"name": "成都", "id": 14.000000, "lon": 104.035634, "lat": 30.714315, "angle": null},
+    {"name": "重庆", "id": 15.000000, "lon": 106.519225, "lat": 29.479073, "angle": null},
+    {"name": "贵阳", "id": 16.000000, "lon": 106.668183, "lat": 26.457486, "angle": null},
+    {"name": "昆明", "id": 17.000000, "lon": 102.726915, "lat": 24.969568, "angle": null},
+    {"name": "银川", "id": 18.000000, "lon": 106.167324, "lat": 38.598593, "angle": null},
+    {"name": "西安", "id": 19.000000, "lon": 108.967213, "lat": 34.276221, "angle": null},
+    {"name": "南宁", "id": 20.000000, "lon": 108.234036, "lat": 22.748502, "angle": null},
+    {"name": "海口", "id": 21.000000, "lon": 110.346274, "lat": 19.970150, "angle": null},
+    {"name": "广州", "id": 22.000000, "lon": 113.226755, "lat": 23.183277, "angle": null},
+    {"name": "长沙", "id": 23.000000, "lon": 112.947996, "lat": 28.170082, "angle": null},
+    {"name": "南昌", "id": 24.000000, "lon": 115.893762, "lat": 28.652529, "angle": null},
+    {"name": "福州", "id": 25.000000, "lon": 119.246798, "lat": 26.070956, "angle": null},
+    {"name": "台北", "id": 26.000000, "lon": 121.503585, "lat": 25.008476, "angle": null},
+    {"name": "杭州", "id": 27.000000, "lon": 120.183062, "lat": 30.330742, "angle": null},
+    {"name": "上海", "id": 28.000000, "lon": 121.449713, "lat": 31.253514, "angle": null},
+    {"name": "武汉", "id": 29.000000, "lon": 114.216652, "lat": 30.579401, "angle": null},
+    {"name": "合肥", "id": 30.000000, "lon": 117.262334, "lat": 31.838495, "angle": null},
+    {"name": "南京", "id": 31.000000, "lon": 118.805714, "lat": 32.085164, "angle": null},
+    {"name": "郑州", "id": 32.000000, "lon": 113.651151, "lat": 34.746419, "angle": null},
+    {"name": "济南", "id": 33.000000, "lon": 117.048354, "lat": 36.608511, "angle": null},
+    {"name": "石家庄", "id": 34.000000, "lon": 114.478253, "lat": 38.033361, "angle": null},
+    {"name": "太原", "id": 35.000000, "lon": 112.483119, "lat": 37.798488, "angle": null},
+    {"name": "呼和浩特", "id": 36.000000, "lon": 111.842856, "lat": 40.895807, "angle": null},
+    {"name": "天津", "id": 37.000000, "lon": 117.351108, "lat": 38.925801, "angle": null},
+    {"name": "沈阳", "id": 38.000000, "lon": 123.296260, "lat": 41.801674, "angle": null},
+    {"name": "长春", "id": 39.000000, "lon": 125.261357, "lat": 43.982041, "angle": null},
+    {"name": "哈尔滨", "id": 40.000000, "lon": 126.567056, "lat": 45.693857, "angle": null},
+    {"name": "北京", "id": 41.000000, "lon": 116.068297, "lat": 39.892297, "angle": null},
+    {"name": "香港", "id": 42.000000, "lon": 114.093184, "lat": 22.428066, "angle": null},
+    {"name": "澳门", "id": 43.000000, "lon": 113.552554, "lat": 22.184710, "angle": null}
+  ]
+  addAnimateOverlay();
+  function addAnimateOverlay(){
+    for(var i = 0;i<data.length;i++) {
+      var d = data[i];
+      var coord = ol.proj.fromLonLat([d.lon, d.lat]);
+	  var element = document.createElement('div');
+	  element.classList.add('animate-overlay');
+	  var overlay = new ol.Overlay({
+		  element: element,
+	  })
+	  map.addOverlay(overlay);
+	  overlay.setPosition(coord);
+    }
+    refresh();
+  }
+</script>
+</body>
+</html>
