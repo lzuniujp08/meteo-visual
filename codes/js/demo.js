@@ -107,6 +107,16 @@ function getTilelayer(lyr){
   return layer;
 }
 
+function getTileSea(){
+  var url = "http://m12.shipxy.com/tile.c?l=Na&m=o&x={x}&y={y}&z={z}";
+  var layer = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url:url
+    })
+  });
+  return layer;
+}
+
 function getWmsLayer() {
   var wms = new ol.layer.Image({
     source: new ol.source.ImageWMS({

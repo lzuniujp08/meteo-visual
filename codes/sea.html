@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map"></div>
+<div id="popup"></div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  var base = getTileSea();
+  var map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [base],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+  //
+  // function getCoord(coord) {
+  //   var coords = coord.coordinates;
+  //   coords = coords.split(',');
+  //   var result = [];
+  //   for(var i = 0;i<coords.length /2;i++) {
+  //     var lon = coords[i * 2],
+  //       lat = coords[i*2 +1];
+  //     result.push([Number(lon), Number(lat)])
+  //   }
+  //   return result;
+  // }
+  //
+  // $.get('datas/seazone.json', function (res) {
+  //   res = res.data;
+  //   for(var i = 0;i<res.length;i++) {
+  //     var r = res[i];
+  //     var multiGeometry = r.multiGeometry.multiGeometry[0];
+  //     var out = multiGeometry.outerBoundaryIs[0];
+  //     var inner =multiGeometry.innerBoundaryIs;
+  //     var coords = [getCoord(out)];
+  //     for(var j = 0;j<inner.length;j++) {
+  //       coords.push(getCoord(inner[j]));
+  //     }
+  //     var coordinates = [coords];
+  //     var feature = {
+  //       "type": "Feature",
+  //       "properties": {
+  //         name:r.name,
+  //         center:r.multiGeometry.point
+  //       },
+  //       "geometry": {
+  //         "type": "MultiPolygon",
+  //         "coordinates":coordinates
+  //       }
+  //     };
+  //     geojson.features.push(feature);
+  //   }
+  //   console.log(geojson);
+  // })
+</script>
+</body>
+</html>
