@@ -201,6 +201,9 @@
 				ctx.putImageData(imageColored, 0, 0);
 			},
 			interpolate : function(data, image, startColor, endColor, width, height) {
+				console.log(data);
+				console.log(startColor);
+				console.log(endColor);
 				var imgData = image.data;
 				var d = data.data;
 				var dlen = d.length;
@@ -246,6 +249,8 @@
 						if(max < matrixData[i][j]) max = matrixData[i][j];
 					}
 				}
+
+				console.log([min, max].join(','));
 				//更新图片数据
 				for(var i = 0; i < height; i++) {
 					for(var j = 0; j < width; j++) {
@@ -286,7 +291,7 @@
 
 /**
  * 百度地图上自定义空间插值覆盖物SpatialmapOverlay
- * 
+ *
  */
 function SpatialmapOverlay(map, cfg) {
 	this._map = map;

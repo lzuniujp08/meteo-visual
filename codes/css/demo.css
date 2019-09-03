@@ -14,8 +14,7 @@ html, body, #map {
   background-color: white;
   padding: 10px;
   margin: 0;
-  list-style: none;
-  cursor: not-allowed; }
+  list-style: none; }
   #legend li span {
     display: inline-block;
     width: 25px;
@@ -39,5 +38,66 @@ html, body, #map {
   #popup:before {
     border-right-color: #34b6ff;
     border-width: 8px; }
+
+@keyframes circle-opacity {
+  0% {
+    transform: scale(0.8); }
+  50% {
+    transform: scale(1.6); }
+  100% {
+    transform: scale(0.8); } }
+.circle {
+  font-size: 12px;
+  position: absolute;
+  top: 100px;
+  left: 100px;
+  width: 30px;
+  height: 30px;
+  background-color: white;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 1px solid red; }
+  .circle .ring {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    z-index: 99;
+    background-color: red; }
+  .circle .back {
+    content: ' ';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    top: 0;
+    left: 0;
+    animation: circle-opacity 2s infinite;
+    border-radius: 50%;
+    z-index: 89;
+    background-color: red;
+    opacity: 0.2; }
+  .circle:hover:before, .circle:hover:after {
+    position: absolute;
+    bottom: calc(100% + 9px);
+    left: calc(50% - 28px); }
+  .circle:hover:before {
+    background-color: rgba(0, 0, 0, 0.75);
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    padding: 0 5px;
+    color: white;
+    content: attr(message);
+    white-space: nowrap;
+    border-radius: 3px; }
+  .circle:hover:after {
+    bottom: calc(100% - 1px);
+    left: calc(50% - 5px);
+    content: ' ';
+    position: absolute;
+    border: 5px solid transparent;
+    border-top: 5px solid rgba(0, 0, 0, 0.75); }
 
 /*# sourceMappingURL=demo.css.map */

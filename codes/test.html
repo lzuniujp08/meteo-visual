@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+  var url ='http://api.shipxy.com/apicall/GetAreaShip?v=2&k=ea144475022d4fb1a2c2a94dfa6bb88f&enc=1&mode=0&scode=0&xy=122700000,37000000-123000000,37000000-123000000,36500000-122700000,36500000';
+  $.ajax({
+    url: url,
+    success: function (data) {
+      console.log(data);
+    }
+  });
+</script>
+</body>
+</html>

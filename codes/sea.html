@@ -5,13 +5,29 @@
   <title>Title</title>
   <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
   <link rel="stylesheet" href="css/demo.css" type="text/css">
+  <style>
+    .tool-box {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: white;
+      padding: 10px;
+      z-index: 9;
+      filter: drop-shadow(2px 2px 4px #999999);
+    }
+  </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="popup"></div>
+<div class="tool-box">
+  <button onclick="LocusStart()">播放</button>
+  <button onclick="LocusPause()">暂停</button>
+</div>
 <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
 <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="https://unpkg.com/rbush@2.0.1/rbush.js"></script>
 <script src="js/demo.js"></script>
+<script src="js/locus.js"></script>
 <script>
   var base = getTileSea();
   var map = new ol.Map({
@@ -27,46 +43,1563 @@
       maxZoom:18
     })
   });
-  //
-  // function getCoord(coord) {
-  //   var coords = coord.coordinates;
-  //   coords = coords.split(',');
-  //   var result = [];
-  //   for(var i = 0;i<coords.length /2;i++) {
-  //     var lon = coords[i * 2],
-  //       lat = coords[i*2 +1];
-  //     result.push([Number(lon), Number(lat)])
-  //   }
-  //   return result;
-  // }
-  //
-  // $.get('datas/seazone.json', function (res) {
-  //   res = res.data;
-  //   for(var i = 0;i<res.length;i++) {
-  //     var r = res[i];
-  //     var multiGeometry = r.multiGeometry.multiGeometry[0];
-  //     var out = multiGeometry.outerBoundaryIs[0];
-  //     var inner =multiGeometry.innerBoundaryIs;
-  //     var coords = [getCoord(out)];
-  //     for(var j = 0;j<inner.length;j++) {
-  //       coords.push(getCoord(inner[j]));
-  //     }
-  //     var coordinates = [coords];
-  //     var feature = {
-  //       "type": "Feature",
-  //       "properties": {
-  //         name:r.name,
-  //         center:r.multiGeometry.point
-  //       },
-  //       "geometry": {
-  //         "type": "MultiPolygon",
-  //         "coordinates":coordinates
-  //       }
-  //     };
-  //     geojson.features.push(feature);
-  //   }
-  //   console.log(geojson);
-  // })
+  var source = new ol.source.Vector({
+    features: []
+  });
+  var vector = new ol.layer.Vector({
+    source: source,
+    style: getLineStyle
+  });
+  map.addLayer(vector);
+  var route = [
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.067,
+      "lat": 21.757,
+      "sog": 3292,
+      "cog": 18530,
+      "hdg": null,
+      "lastTime": "2019-08-13 08:14:54",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.0932,
+      "lat": 21.7468,
+      "sog": 4732,
+      "cog": 9990,
+      "hdg": null,
+      "lastTime": "2019-08-13 08:27:24",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.1434,
+      "lat": 21.7394,
+      "sog": 4886,
+      "cog": 9430,
+      "hdg": null,
+      "lastTime": "2019-08-13 08:46:25",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.1813,
+      "lat": 21.7329,
+      "sog": 4732,
+      "cog": 9690,
+      "hdg": null,
+      "lastTime": "2019-08-13 09:00:24",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.216,
+      "lat": 21.7313,
+      "sog": 4938,
+      "cog": 7140,
+      "hdg": null,
+      "lastTime": "2019-08-13 09:12:56",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.22111,
+      "lat": 21.7325,
+      "sog": 0,
+      "cog": 6570,
+      "hdg": null,
+      "lastTime": "2019-08-16 10:18:51",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.22111,
+      "lat": 21.7325,
+      "sog": 0,
+      "cog": 18200,
+      "hdg": null,
+      "lastTime": "2019-08-16 10:42:51",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.221,
+      "lat": 21.7324,
+      "sog": 0,
+      "cog": 22650,
+      "hdg": null,
+      "lastTime": "2019-08-16 11:15:51",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.221,
+      "lat": 21.7324,
+      "sog": 0,
+      "cog": 19800,
+      "hdg": null,
+      "lastTime": "2019-08-16 11:34:22",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.22111,
+      "lat": 21.7325,
+      "sog": 0,
+      "cog": 26910,
+      "hdg": null,
+      "lastTime": "2019-08-16 11:52:22",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.2138,
+      "lat": 21.7214,
+      "sog": 4063,
+      "cog": 18590,
+      "hdg": null,
+      "lastTime": "2019-08-16 12:16:22",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.2166,
+      "lat": 21.6893,
+      "sog": 4423,
+      "cog": 16310,
+      "hdg": null,
+      "lastTime": "2019-08-16 12:29:52",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.2264,
+      "lat": 21.6765,
+      "sog": 4526,
+      "cog": 11500,
+      "hdg": null,
+      "lastTime": "2019-08-16 12:40:24",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.229904,
+      "lat": 21.6516,
+      "sog": 4423,
+      "cog": 15210,
+      "hdg": null,
+      "lastTime": "2019-08-16 12:46:19",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.243,
+      "lat": 21.6207,
+      "sog": 565,
+      "cog": 21630,
+      "hdg": null,
+      "lastTime": "2019-08-16 13:04:20",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.2353,
+      "lat": 21.6164,
+      "sog": 1851,
+      "cog": 24010,
+      "hdg": null,
+      "lastTime": "2019-08-16 13:17:51",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.2312,
+      "lat": 21.6124,
+      "sog": 2623,
+      "cog": 18400,
+      "hdg": null,
+      "lastTime": "2019-08-16 13:22:52",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.320496,
+      "lat": 21.578,
+      "sog": 2263,
+      "cog": 8960,
+      "hdg": null,
+      "lastTime": "2019-08-16 14:34:24",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.34151,
+      "lat": 21.5783,
+      "sog": 2469,
+      "cog": 9810,
+      "hdg": null,
+      "lastTime": "2019-08-16 14:49:54",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.3566,
+      "lat": 21.579,
+      "sog": 2314,
+      "cog": 9620,
+      "hdg": null,
+      "lastTime": "2019-08-16 15:01:24",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.494896,
+      "lat": 21.5666,
+      "sog": 2263,
+      "cog": 10920,
+      "hdg": null,
+      "lastTime": "2019-08-16 16:48:59",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.514496,
+      "lat": 21.5656,
+      "sog": 2057,
+      "cog": 8770,
+      "hdg": null,
+      "lastTime": "2019-08-16 17:04:40",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.525,
+      "lat": 21.5636,
+      "sog": 2366,
+      "cog": 8270,
+      "hdg": null,
+      "lastTime": "2019-08-16 17:13:08",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5322,
+      "lat": 21.5625,
+      "sog": 2211,
+      "cog": 11700,
+      "hdg": null,
+      "lastTime": "2019-08-16 17:18:39",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5511,
+      "lat": 21.561,
+      "sog": 2314,
+      "cog": 9700,
+      "hdg": null,
+      "lastTime": "2019-08-16 17:33:10",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5694,
+      "lat": 21.5606,
+      "sog": 2006,
+      "cog": 10380,
+      "hdg": null,
+      "lastTime": "2019-08-16 17:47:40",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5825,
+      "lat": 21.5625,
+      "sog": 2211,
+      "cog": 7230,
+      "hdg": null,
+      "lastTime": "2019-08-16 17:58:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5965,
+      "lat": 21.5712,
+      "sog": 2726,
+      "cog": 750,
+      "hdg": null,
+      "lastTime": "2019-08-16 18:12:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5937,
+      "lat": 21.5772,
+      "sog": 1594,
+      "cog": 14450,
+      "hdg": null,
+      "lastTime": "2019-08-16 18:22:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.597694,
+      "lat": 21.5771,
+      "sog": 1080,
+      "cog": 1560,
+      "hdg": null,
+      "lastTime": "2019-08-16 18:50:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6015,
+      "lat": 21.5834,
+      "sog": 720,
+      "cog": 3760,
+      "hdg": null,
+      "lastTime": "2019-08-16 19:01:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5923,
+      "lat": 21.5761,
+      "sog": 2211,
+      "cog": 21220,
+      "hdg": null,
+      "lastTime": "2019-08-16 19:24:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5799,
+      "lat": 21.5704,
+      "sog": 2057,
+      "cog": 24660,
+      "hdg": null,
+      "lastTime": "2019-08-16 19:37:13",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.57169,
+      "lat": 21.568,
+      "sog": 565,
+      "cog": 5250,
+      "hdg": null,
+      "lastTime": "2019-08-16 19:45:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5736,
+      "lat": 21.5695,
+      "sog": 668,
+      "cog": 33890,
+      "hdg": null,
+      "lastTime": "2019-08-16 20:00:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.57449,
+      "lat": 21.5714,
+      "sog": 1028,
+      "cog": 9650,
+      "hdg": null,
+      "lastTime": "2019-08-16 20:15:44",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.58009,
+      "lat": 21.6061,
+      "sog": 3806,
+      "cog": 8300,
+      "hdg": null,
+      "lastTime": "2019-08-16 20:36:45",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5844,
+      "lat": 21.5202,
+      "sog": 0,
+      "cog": 15730,
+      "hdg": null,
+      "lastTime": "2019-08-16 21:35:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5846,
+      "lat": 21.6041,
+      "sog": 0,
+      "cog": 15730,
+      "hdg": null,
+      "lastTime": "2019-08-16 21:53:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5846,
+      "lat": 21.6042,
+      "sog": 0,
+      "cog": 15730,
+      "hdg": null,
+      "lastTime": "2019-08-16 22:11:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5848,
+      "lat": 21.6043,
+      "sog": 0,
+      "cog": 15730,
+      "hdg": null,
+      "lastTime": "2019-08-16 22:44:13",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.58489,
+      "lat": 21.6043,
+      "sog": 0,
+      "cog": 15730,
+      "hdg": null,
+      "lastTime": "2019-08-16 23:11:13",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.585106,
+      "lat": 21.6044,
+      "sog": 0,
+      "cog": 17480,
+      "hdg": null,
+      "lastTime": "2019-08-16 23:26:14",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.585106,
+      "lat": 21.6042,
+      "sog": 0,
+      "cog": 21520,
+      "hdg": null,
+      "lastTime": "2019-08-17 00:08:15",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.585106,
+      "lat": 21.6043,
+      "sog": 0,
+      "cog": 21520,
+      "hdg": null,
+      "lastTime": "2019-08-17 02:27:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.585106,
+      "lat": 21.6044,
+      "sog": 0,
+      "cog": 9660,
+      "hdg": null,
+      "lastTime": "2019-08-17 02:57:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.585,
+      "lat": 21.6044,
+      "sog": 0,
+      "cog": 9660,
+      "hdg": null,
+      "lastTime": "2019-08-17 03:48:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5848,
+      "lat": 21.6044,
+      "sog": 0,
+      "cog": 9660,
+      "hdg": null,
+      "lastTime": "2019-08-17 04:09:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5846,
+      "lat": 21.6043,
+      "sog": 0,
+      "cog": 9660,
+      "hdg": null,
+      "lastTime": "2019-08-17 04:36:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.584496,
+      "lat": 21.6043,
+      "sog": 0,
+      "cog": 9660,
+      "hdg": null,
+      "lastTime": "2019-08-17 04:54:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.584305,
+      "lat": 21.6045,
+      "sog": 0,
+      "cog": 21350,
+      "hdg": null,
+      "lastTime": "2019-08-17 05:09:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5953,
+      "lat": 21.6039,
+      "sog": 3858,
+      "cog": 8310,
+      "hdg": null,
+      "lastTime": "2019-08-17 05:33:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6218,
+      "lat": 21.5882,
+      "sog": 4218,
+      "cog": 11990,
+      "hdg": null,
+      "lastTime": "2019-08-17 05:46:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6493,
+      "lat": 21.58,
+      "sog": 4218,
+      "cog": 10380,
+      "hdg": null,
+      "lastTime": "2019-08-17 05:58:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6787,
+      "lat": 21.574,
+      "sog": 4423,
+      "cog": 9420,
+      "hdg": null,
+      "lastTime": "2019-08-17 06:10:06",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7006,
+      "lat": 21.5693,
+      "sog": 4372,
+      "cog": 11150,
+      "hdg": null,
+      "lastTime": "2019-08-17 06:19:07",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.87022,
+      "lat": 21.806864,
+      "sog": 1955,
+      "cog": 28880,
+      "hdg": null,
+      "lastTime": "2019-08-26 15:31:56",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.86427,
+      "lat": 21.811333,
+      "sog": 2058,
+      "cog": 30790,
+      "hdg": null,
+      "lastTime": "2019-08-26 15:38:55",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.86037,
+      "lat": 21.816452,
+      "sog": 1955,
+      "cog": 32840,
+      "hdg": null,
+      "lastTime": "2019-08-26 15:44:55",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.85715,
+      "lat": 21.822096,
+      "sog": 1852,
+      "cog": 32490,
+      "hdg": null,
+      "lastTime": "2019-08-26 15:50:55",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.75471,
+      "lat": 21.7562,
+      "sog": 0,
+      "cog": 27840,
+      "hdg": null,
+      "lastTime": "2019-08-27 00:33:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.75449,
+      "lat": 21.7561,
+      "sog": 0,
+      "cog": 27840,
+      "hdg": null,
+      "lastTime": "2019-08-27 02:03:45",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.75449,
+      "lat": 21.756,
+      "sog": 0,
+      "cog": 27840,
+      "hdg": null,
+      "lastTime": "2019-08-27 03:47:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7342,
+      "lat": 21.7391,
+      "sog": 4475,
+      "cog": 22790,
+      "hdg": null,
+      "lastTime": "2019-08-27 05:24:41",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7126,
+      "lat": 21.7199,
+      "sog": 4372,
+      "cog": 22930,
+      "hdg": null,
+      "lastTime": "2019-08-27 05:36:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7038,
+      "lat": 21.7095,
+      "sog": 4526,
+      "cog": 21240,
+      "hdg": null,
+      "lastTime": "2019-08-27 05:41:41",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7082,
+      "lat": 21.6698,
+      "sog": 1646,
+      "cog": 12740,
+      "hdg": null,
+      "lastTime": "2019-08-27 06:04:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.714,
+      "lat": 21.657,
+      "sog": 1543,
+      "cog": 20510,
+      "hdg": null,
+      "lastTime": "2019-08-27 06:20:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.707504,
+      "lat": 21.6435,
+      "sog": 2160,
+      "cog": 19970,
+      "hdg": null,
+      "lastTime": "2019-08-27 06:34:13",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.704414,
+      "lat": 21.635218,
+      "sog": 1646,
+      "cog": 18430,
+      "hdg": null,
+      "lastTime": "2019-08-27 06:37:48",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7036,
+      "lat": 21.6315,
+      "sog": 2417,
+      "cog": 20120,
+      "hdg": null,
+      "lastTime": "2019-08-27 06:45:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7037,
+      "lat": 21.6207,
+      "sog": 2211,
+      "cog": 16250,
+      "hdg": null,
+      "lastTime": "2019-08-27 06:55:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6998,
+      "lat": 21.6137,
+      "sog": 1851,
+      "cog": 26170,
+      "hdg": null,
+      "lastTime": "2019-08-27 07:07:21",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6866,
+      "lat": 21.6115,
+      "sog": 2006,
+      "cog": 24890,
+      "hdg": null,
+      "lastTime": "2019-08-27 07:19:44",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.67477,
+      "lat": 21.609129,
+      "sog": 2366,
+      "cog": 24170,
+      "hdg": null,
+      "lastTime": "2019-08-27 07:26:20",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6738,
+      "lat": 21.6085,
+      "sog": 2160,
+      "cog": 22990,
+      "hdg": null,
+      "lastTime": "2019-08-27 07:31:44",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6654,
+      "lat": 21.6015,
+      "sog": 2057,
+      "cog": 23180,
+      "hdg": null,
+      "lastTime": "2019-08-27 07:41:45",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.654495,
+      "lat": 21.5916,
+      "sog": 1800,
+      "cog": 21910,
+      "hdg": null,
+      "lastTime": "2019-08-27 07:55:15",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6454,
+      "lat": 21.5853,
+      "sog": 2057,
+      "cog": 26780,
+      "hdg": null,
+      "lastTime": "2019-08-27 08:05:40",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.631294,
+      "lat": 21.584,
+      "sog": 1903,
+      "cog": 26600,
+      "hdg": null,
+      "lastTime": "2019-08-27 08:19:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6286,
+      "lat": 21.5847,
+      "sog": 462,
+      "cog": 31280,
+      "hdg": null,
+      "lastTime": "2019-08-27 08:28:41",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6297,
+      "lat": 21.5846,
+      "sog": 257,
+      "cog": 3550,
+      "hdg": null,
+      "lastTime": "2019-08-27 08:37:42",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.63071,
+      "lat": 21.5844,
+      "sog": 771,
+      "cog": 12290,
+      "hdg": null,
+      "lastTime": "2019-08-27 08:50:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6289,
+      "lat": 21.5894,
+      "sog": 668,
+      "cog": 34120,
+      "hdg": null,
+      "lastTime": "2019-08-27 09:06:11",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6275,
+      "lat": 21.5803,
+      "sog": 3446,
+      "cog": 18320,
+      "hdg": null,
+      "lastTime": "2019-08-27 09:34:13",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6278,
+      "lat": 21.5707,
+      "sog": 0,
+      "cog": 34060,
+      "hdg": null,
+      "lastTime": "2019-08-27 09:57:41",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.61929,
+      "lat": 21.5715,
+      "sog": 2366,
+      "cog": 28330,
+      "hdg": null,
+      "lastTime": "2019-08-27 10:10:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6102,
+      "lat": 21.5727,
+      "sog": 1646,
+      "cog": 27330,
+      "hdg": null,
+      "lastTime": "2019-08-27 10:20:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6084,
+      "lat": 21.5731,
+      "sog": 1903,
+      "cog": 27710,
+      "hdg": null,
+      "lastTime": "2019-08-27 10:22:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6023,
+      "lat": 21.5748,
+      "sog": 1646,
+      "cog": 30860,
+      "hdg": null,
+      "lastTime": "2019-08-27 10:30:05",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.587906,
+      "lat": 21.578,
+      "sog": 1594,
+      "cog": 28320,
+      "hdg": null,
+      "lastTime": "2019-08-27 10:43:44",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5778,
+      "lat": 21.5788,
+      "sog": 1491,
+      "cog": 27860,
+      "hdg": null,
+      "lastTime": "2019-08-27 10:54:14",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.56911,
+      "lat": 21.5735,
+      "sog": 2469,
+      "cog": 16340,
+      "hdg": null,
+      "lastTime": "2019-08-27 11:05:43",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5794,
+      "lat": 21.5653,
+      "sog": 2623,
+      "cog": 11400,
+      "hdg": null,
+      "lastTime": "2019-08-27 11:16:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.5928,
+      "lat": 21.5649,
+      "sog": 2366,
+      "cog": 8230,
+      "hdg": null,
+      "lastTime": "2019-08-27 11:26:44",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.610306,
+      "lat": 21.5662,
+      "sog": 2263,
+      "cog": 8180,
+      "hdg": null,
+      "lastTime": "2019-08-27 11:41:13",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6216,
+      "lat": 21.5672,
+      "sog": 2109,
+      "cog": 6840,
+      "hdg": null,
+      "lastTime": "2019-08-27 11:50:44",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.635,
+      "lat": 21.5693,
+      "sog": 2520,
+      "cog": 6210,
+      "hdg": null,
+      "lastTime": "2019-08-27 12:02:14",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6476,
+      "lat": 21.5718,
+      "sog": 2109,
+      "cog": 8130,
+      "hdg": null,
+      "lastTime": "2019-08-27 12:13:16",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6603,
+      "lat": 21.5738,
+      "sog": 1954,
+      "cog": 8120,
+      "hdg": null,
+      "lastTime": "2019-08-27 12:24:12",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6718,
+      "lat": 21.5758,
+      "sog": 2211,
+      "cog": 9650,
+      "hdg": null,
+      "lastTime": "2019-08-27 12:34:10",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.688896,
+      "lat": 21.5798,
+      "sog": 2211,
+      "cog": 7150,
+      "hdg": null,
+      "lastTime": "2019-08-27 12:49:09",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7011,
+      "lat": 21.5832,
+      "sog": 1851,
+      "cog": 7980,
+      "hdg": null,
+      "lastTime": "2019-08-27 13:00:10",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7076,
+      "lat": 21.5852,
+      "sog": 2057,
+      "cog": 6830,
+      "hdg": null,
+      "lastTime": "2019-08-27 13:06:10",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.726494,
+      "lat": 21.5944,
+      "sog": 1851,
+      "cog": 2990,
+      "hdg": null,
+      "lastTime": "2019-08-27 13:25:47",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7247,
+      "lat": 21.6057,
+      "sog": 2109,
+      "cog": 33080,
+      "hdg": null,
+      "lastTime": "2019-08-27 13:36:48",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.72671,
+      "lat": 21.6178,
+      "sog": 1697,
+      "cog": 2730,
+      "hdg": null,
+      "lastTime": "2019-08-27 13:49:49",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7284,
+      "lat": 21.6363,
+      "sog": 2572,
+      "cog": 30820,
+      "hdg": null,
+      "lastTime": "2019-08-27 14:07:49",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7109,
+      "lat": 21.6438,
+      "sog": 1903,
+      "cog": 28430,
+      "hdg": null,
+      "lastTime": "2019-08-27 14:24:50",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6938,
+      "lat": 21.6382,
+      "sog": 1954,
+      "cog": 22140,
+      "hdg": null,
+      "lastTime": "2019-08-27 14:41:50",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.69142,
+      "lat": 21.633488,
+      "sog": 1852,
+      "cog": 19940,
+      "hdg": null,
+      "lastTime": "2019-08-27 14:42:26",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6883,
+      "lat": 21.6277,
+      "sog": 1851,
+      "cog": 20620,
+      "hdg": null,
+      "lastTime": "2019-08-27 14:53:21",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.678894,
+      "lat": 21.6206,
+      "sog": 2160,
+      "cog": 22090,
+      "hdg": null,
+      "lastTime": "2019-08-27 15:04:21",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6706,
+      "lat": 21.6109,
+      "sog": 1954,
+      "cog": 20170,
+      "hdg": null,
+      "lastTime": "2019-08-27 15:16:22",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.6656,
+      "lat": 21.6027,
+      "sog": 1440,
+      "cog": 21080,
+      "hdg": null,
+      "lastTime": "2019-08-27 15:26:23",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.66689,
+      "lat": 21.5906,
+      "sog": 2160,
+      "cog": 13940,
+      "hdg": null,
+      "lastTime": "2019-08-27 15:41:52",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.678,
+      "lat": 21.5909,
+      "sog": 1903,
+      "cog": 7820,
+      "hdg": null,
+      "lastTime": "2019-08-27 15:51:24",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7011,
+      "lat": 21.5934,
+      "sog": 1491,
+      "cog": 11550,
+      "hdg": null,
+      "lastTime": "2019-08-27 16:12:54",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7124,
+      "lat": 21.5883,
+      "sog": 1543,
+      "cog": 12890,
+      "hdg": null,
+      "lastTime": "2019-08-27 16:25:55",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7238,
+      "lat": 21.5806,
+      "sog": 1337,
+      "cog": 13680,
+      "hdg": null,
+      "lastTime": "2019-08-27 16:40:55",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7304,
+      "lat": 21.5758,
+      "sog": 1954,
+      "cog": 10590,
+      "hdg": null,
+      "lastTime": "2019-08-27 16:49:55",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7374,
+      "lat": 21.5887,
+      "sog": 2263,
+      "cog": 32910,
+      "hdg": null,
+      "lastTime": "2019-08-27 17:04:57",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7275,
+      "lat": 21.6002,
+      "sog": 2006,
+      "cog": 30510,
+      "hdg": null,
+      "lastTime": "2019-08-27 17:17:26",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.71831,
+      "lat": 21.6107,
+      "sog": 2211,
+      "cog": 32830,
+      "hdg": null,
+      "lastTime": "2019-08-27 17:29:26",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7094,
+      "lat": 21.6204,
+      "sog": 2469,
+      "cog": 26980,
+      "hdg": null,
+      "lastTime": "2019-08-27 17:40:38",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.7082,
+      "lat": 21.6199,
+      "sog": 1028,
+      "cog": 14560,
+      "hdg": null,
+      "lastTime": "2019-08-27 17:48:37",
+      "rot": null,
+      "draught": null
+    },
+    {
+      "uuid": null,
+      "mmsi": 930088888,
+      "lon": 112.708305,
+      "lat": 21.6225,
+      "sog": 0,
+      "cog": 3100,
+      "hdg": null,
+      "lastTime": "2019-08-27 18:04:08",
+      "rot": null,
+      "draught": null
+    }
+  ];
+  var coords = [];
+  for(var i = 0;i<route.length;i++) {
+    coords.push([
+      route[i].lon,
+      route[i].lat
+    ])
+  };
+  var geometry = new ol.geom.LineString(coords);
+  geometry.transform('EPSG:4326', "EPSG:3857");
+  var feature = new ol.Feature({
+    geometry: geometry
+  });
+  source.addFeature(feature);
+  var locus = initLocus(map, coords);
+  locus.start();
+  function LocusStart() {
+    if (locus)
+      locus.start();
+  }
+  function LocusPause() {
+    if (locus)
+      locus.pause()
+  }
 </script>
 </body>
 </html>
