@@ -68,7 +68,7 @@ var moveLocus = function(LocusOption) {
   try {
     var _locusState = LocusOption.locusState;
     var _locusData = LocusOption.locusData;
-    drawMarkers(_locusData, _locusState);
+    fitView2Data(_locusData, _locusState);
     //开启路书
     locus = new TYMapLib.lu_track(_map, _locusData.lnglat, {
       defaultContent: _locusData.label,
@@ -83,7 +83,11 @@ var moveLocus = function(LocusOption) {
   }
 };
 
-function drawMarkers(locusData) {
+/**
+ * 适应路径区域
+ * @param locusData
+ */
+function fitView2Data(locusData) {
   if (locusData) {
     if (locusData.nodeIcon) image = locusData.nodeIcon;
     if (locusData.label) text = locusData.label.content;
@@ -180,27 +184,15 @@ var TYMapLib = window.TYMapLib = TYMapLib || {};
 
   lu_track.prototype.start = function() {
     var me = this, len = me._path.length;
-    //不是第一次点击开始,并且小车还没到达终点
     if (me.i && me.i < len - 1) {
-      //没按pause再按start不做处理
       if (!me._fromPause) {
         return;
       } else if (!me._fromStop) {
-        //按了pause按钮,并且再按start，直接移动到下一点
-        //并且此过程中，没有按stop按钮
-        //防止先stop，再pause，然后连续不停的start的异常
         me._moveNext(++me.i);
-
       }
     } else {
-      //第一次点击开始，或者点了stop之后点开始
       me._addMarker();
-      //等待marker动画完毕再加载infowindow
       me._timeoutFlag = setTimeout(function() {
-        //弹出窗口
-        if (me._opts.defaultContent == "") {
-          //  me.hideInfoWindow();
-        }
         me._moveNext(me.i);
       }, 400);
     }
@@ -208,23 +200,12 @@ var TYMapLib = window.TYMapLib = TYMapLib || {};
     this._fromPause = false;
     this._fromStop = false;
   },
-    /**
-     * 结束运动
-     * @return 无返回值.
-     *
-     * @example <b>参考示例：</b><br />
-     * lu_track.stop();
-     */
     lu_track.prototype.stop = function() {
       this.i = 0;
       this._fromStop = true;
       clearInterval(this._intervalFlag);
       this._clearTimeout();
     };
-  /**
-   * 暂停运动
-   * @return 无返回值.
-   */
   lu_track.prototype.pause = function() {
     clearInterval(this._intervalFlag);
     //标识是否是按过pause按钮
@@ -239,11 +220,11 @@ var TYMapLib = window.TYMapLib = TYMapLib || {};
   lu_track.prototype._addMarker = function(callback) {
     if (this._marker) {
       this.stop();
-      this._marker.setMap(null);
+      _map.removeOverlay(this._marker);
       clearTimeout(this._timeoutFlag);
     }
     //移除之前的overlay
-    this._overlay && this._overlay.setMap(null);
+    this._overlay && _map.removeOverlay(this._overlay);;
     var marker = new TYCar(this._path[0], this._opts);
     _map.addOverlay(marker);
     this._marker = marker;
@@ -261,20 +242,10 @@ var TYMapLib = window.TYMapLib = TYMapLib || {};
       for (var i = 0, ii = coordinates.length - 1; i < ii; ++i) {
         var c1 = ol.proj.transform(coordinates[i], sourceProj, 'EPSG:4326');
         var c2 = ol.proj.transform(coordinates[i + 1], sourceProj, 'EPSG:4326');
-        debugger;
         length += wgs84Sphere.haversineDistance(c1, c2);
       }
       return length;
     },
-    //目标点的  当前的步长,position,总的步长,动画效果,回调
-    /**
-     * 移动小车
-     * @param {Number} poi 当前的步长.
-     * @param {Point} initPos 经纬度坐标初始点.
-     * @param {Point} targetPos 经纬度坐标目标点.
-     * @param {Function} effect 缓动效果.
-     * @return 无返回值.
-     */
     lu_track.prototype._move = function(initPos, targetPos, effect, currentCount) {
       var me = this;
       me.ismove = true;
@@ -378,22 +349,12 @@ var TYMapLib = window.TYMapLib = TYMapLib || {};
       this._marker.setRotation(a);
     },
 
-    lu_track.prototype.linePixellength = function(from, to) {
-      return Math.sqrt(Math.abs(from.x - to.x) * Math.abs(from.x - to.x) + Math.abs(from.y - to.y) * Math.abs(from.y - to.y));
-    },
-    lu_track.prototype.pointToPoint = function(from, to) {
-      return Math.abs(from.x - to.x) * Math.abs(from.x - to.x) + Math.abs(from.y - to.y) * Math.abs(from.y - to.y)
-    },
-
     /**
      * 移动到下一个点
      * @param {Number} index 当前点的索引.
      * @return 无返回值.
      */
     lu_track.prototype._moveNext = function(index) {
-      this.ismove = true;
-      if (this._opts.func && this._opts.func != "")
-        _opts.func(index);
       var me = this;
       if (index == me._path.length - 1 && me._opts.circlable) {
         index = 0;
@@ -448,21 +409,6 @@ var TYMapLib = window.TYMapLib = TYMapLib || {};
         }
       }
     },
-    /**
-     * 在某个点暂停的时间
-     * @param {Number} index 点的索引.
-     * @return 无返回值.
-     */
-    lu_track.prototype._pauseForView = function(index) {
-
-      var me = this;
-      var t = setTimeout(function() {
-          //运行下一个点
-          me._moveNext(++me.i);
-        },
-        me._opts.landmarkPois[index].pauseTime * 1000);
-      me._setTimeoutQuene.push(t);
-    },
     //清除暂停后再开始运行的timeout
     lu_track.prototype._clearTimeout = function() {
       for (var i in this._setTimeoutQuene) {
@@ -478,26 +424,5 @@ var TYMapLib = window.TYMapLib = TYMapLib || {};
           d = count;
         return c * t / d + b;
       }
-    },
-
-    /**
-     * 否经过某个点的index
-     * @param {Point} markerPoi 当前小车的坐标点.
-     * @return 无返回值.
-     */
-    lu_track.prototype._troughPointIndex = function(markerPoi) {
-      var t = this._opts.landmarkPois, distance;
-      for (var i = 0, len = t.length; i < len; i++) {
-        //landmarkPois中的点没有出现过的话
-        if (!t[i].bShow) {
-          distance = markerPoi.distance(new AMap.LngLat(t[i].lng, t[i].lat));
-          //两点距离小于10米，认为是同一个点
-          if (distance < 10) {
-            t[i].bShow = true;
-            return i;
-          }
-        }
-      }
-      return -1;
     }
 })();

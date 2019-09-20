@@ -107,15 +107,29 @@ function getTilelayer(lyr){
   return layer;
 }
 
-function getTileSea(){
-  var url = "http://m12.shipxy.com/tile.c?l=Na&m=o&x={x}&y={y}&z={z}";
+function getTileSea() {
+  var source = new ol.source.OSM({
+    url: 'http://m12.shipxy.com/tile.c?l=Na&m=o&x={x}&y={y}&z={z}',
+    attributions: [],
+    crossOrigin: null,
+    maxZoom: 15
+  });
+  var layer = new ol.layer.Tile({
+    source: source
+  });
+  return layer;
+}
+
+/*function getTileSea(){
+  // var url = "http://m12.shipxy.com/tile.c?l=Na&m=o&x={x}&y={y}&z={z}";
+  var url = 'http://gis.chinaports.com:5010/map/getMap/{x}/{y}/{z}';
   var layer = new ol.layer.Tile({
     source: new ol.source.XYZ({
       url:url
     })
   });
   return layer;
-}
+}*/
 
 function getWmsLayer() {
   var wms = new ol.layer.Image({
