@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head lang="en">
+		<meta charset="UTF-8">
+		<title>地图展示</title>
+		<script src="http://api.shipxy.com/h5/api/plugins/jquery/jquery.min.js"></script>
+		<script src="http://api.shipxy.com/h5/api/?v=3.0&k=ea144475022d4fb1a2c2a94dfa6bb88f"></script>
+		<style>
+			.my-map {
+				position: absolute;
+				left: 0px;
+				top: 0px;
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				outline: none;
+				background-color: #A3CCFF;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="map" class="my-map">
+		</div>
+		<script>
+			// 创建地图示例
+			var map = new ShipxyAPI.Map("map", {
+				ak: "ea144475022d4fb1a2c2a94dfa6bb88f",
+				mapTypes: ['MT_SEA', 'MT_GOOGLE'],
+				centerPoint: [31.607, 98.633], // 初始中心点坐标
+				zoom: 4, // 初始缩放级别
+				minZoom: 2, // 最小缩放级别
+				maxZoom: 18, // 最大缩放级别
+			});
+			map.fitWorld();
+			// 添加标记
+			setTimeout(function() {
+				//[116.76994214802721, 49.562423076321636]
+				// 海图
+				ShipxyAPI.marker(ShipxyAPI.latLng(49.562423076321636, 116.76994214802721)).addTo(map);
+				// 海图转gcj2000
+				ShipxyAPI.marker(ShipxyAPI.latLng(49.564206116900905, 116.77755711611701)).addTo(map);
+				//海图API
+				ShipxyAPI.marker(ShipxyAPI.latLng(49.821749187370630, 116.70227050781251)).addTo(map);
+			}, 100);
+
+
+			// 开启自定义瓦片图层服务
+			ShipxyAPI.customeTileLayerService(map);
+			// 添加自定义自定义瓦片图层
+			var options = {
+				cid: "testLayer",
+				label: '高德地图',
+				errorTileUrl: 'http://m.shipxy.com/img/erroshipxy.png',
+				tileFunction: function(view) {
+					var url = 'http://webrd01.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8';
+					var _url = url
+						.replace('{x}', view.tile.column)
+						.replace('{y}', view.tile.row)
+						.replace('{z}', view.zoom);
+					return _url;
+				},
+			};
+			map.customeTileLayerService.addLayer(options);
+		</script>
+	</body>
+</html>

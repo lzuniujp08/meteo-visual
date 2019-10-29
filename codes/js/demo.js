@@ -98,7 +98,8 @@ function addGradientLegend() {
 }
 
 function getTilelayer(lyr){
-  var url = "http://10.30.17.52:19999/maps//terrain/{z}/{x}/{y}.png";
+  // var url = "http://10.30.17.52:19999/maps//terrain/{z}/{x}/{y}.png";
+  var url = "http://mt2.google.cn/vt/lyrs=m@180000000&hl=zh-CN&gl=cn&src=app&s=Gal&x={x}&y={y}&z={z}";
   var layer = new ol.layer.Tile({
     source: new ol.source.XYZ({
       url:url
@@ -108,11 +109,12 @@ function getTilelayer(lyr){
 }
 
 function getTileSea() {
-  var source = new ol.source.OSM({
-    url: 'http://m12.shipxy.com/tile.c?l=Na&m=o&x={x}&y={y}&z={z}',
-    attributions: [],
-    crossOrigin: null,
-    maxZoom: 15
+  var source = new ol.source.XYZ({
+    url: 'http://m12.shipxy.com/tile.c?l=Na&m=o&y={y}&x={x}&z={z}',
+    projection: 'EPSG:3395',
+    tileGrid: ol.tilegrid.createXYZ({
+      extent: [-20037508.342789244, -20037508.342789244, 20037508.342789244, 20037508.342789244]
+    })
   });
   var layer = new ol.layer.Tile({
     source: source
@@ -139,7 +141,7 @@ function getWmsLayer() {
       params: {
         'VERSION': '1.1.1',
         STYLES: '',
-        LAYERS: 'world:base_province',
+        LAYERS: 'world:world_admin',
       }
     }),
     zIndex: 2

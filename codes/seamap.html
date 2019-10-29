@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Title</title>
+		<link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+		<style type="text/css">
+			html,
+			body,
+			#map {
+				border: 0;
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				height: 100%;
+				font-size: 13px;
+				overflow: hidden;
+			}
+			.base-map {
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				z-index: 99;
+				padding: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="map">
+			<div class="base-map">
+				<button id="seamap">海图</button>
+				<button id="vecmap">矢量</button>
+				<button id="imgmap">卫星</button>
+			</div>
+		</div>
+		<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+		<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+		<script src="js/demo.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.4/proj4.js"></script>
+		<script>
+			proj4.defs('EPSG:3395', '+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs');
+			ol.proj.get('EPSG:3395').setExtent([-20037508.342789244, -20037508.342789244, 20037508.342789244, 20037508.342789244]);
+			
+			var seaMap = getTileSea();
+			var vecMap = getTilelayer();
+			var boundry = getWmsLayer();
+			
+			var viewDict = {
+				sea: new ol.View({
+					center: ol.proj.fromLonLat([98.633, 31.607]),
+					zoom: 4,
+					minZoom: 0,
+					maxZoom: 18,
+					projection: 'EPSG:3395'
+				}),
+				vec: new ol.View({
+					center: ol.proj.fromLonLat([98.633, 31.607]),
+					zoom: 4,
+					minZoom: 0,
+					maxZoom: 18,
+					projection: 'EPSG:3857'
+				})
+			};
+			
+			var map = new ol.Map({
+				controls: ol.control.defaults({
+					attribution: false
+				}),
+				target: 'map',
+				layers: [seaMap, vecMap, boundry],
+				view: viewDict['vec']
+			});
+			
+			vecMap.setVisible(false);
+			
+			// 添加geojson数据
+			var vectorSource = new ol.source.Vector({
+				url:"datas/nmg.geojson",
+				format: new ol.format.GeoJSON()
+			});
+			var vector = new ol.layer.Vector({
+				source: vectorSource,
+				zIndex: 3
+			});
+			map.addLayer(vector);
+			
+			$("#seamap").on("click", function () {
+				vecMap.setVisible(false);
+				// map.setView(viewDict['sea']);
+				seaMap.setVisible(true);
+				// var center = map.getView().getCenter();
+				// var center1 = ol.proj.transform(center, 'EPSG:3857', "EPSG:3395");
+				// map.getView().animate({
+				// 	center: center1,
+				// 	duration: 100
+				// });
+				// var features = vectorSource.getFeatures();
+			});
+			$("#vecmap").on("click", function () {
+				seaMap.setVisible(false);
+				// map.setView(viewDict['vec']);
+				vecMap.setVisible(true);
+				// var center = map.getView().getCenter();
+				// var center1 = ol.proj.transform(center, 'EPSG:3395', "EPSG:3857");
+				// map.getView().animate({
+				// 	center: center1,
+				// 	duration: 100
+				// });
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <style>
+  p {
+    text-indent: 2em;
+    font-size: 1.2rem;
+    line-height: 2rem;
+  }
+  </style>
+</head>
+<body>
+<button onclick="copyContent()">一键复制</button>
+<div id="content">
+  <h1>电容式触摸屏</h1>
+  <h2>电容触摸屏的介绍</h2>
+  <p>
+    电容式触摸屏的构造主要是在玻璃屏幕上镀一层透明的薄膜体层，再在导体层外加上一块保护玻璃，双玻璃设计能彻底保护导体层及感应器。
+  </p>
+  <p>
+    电容式触摸屏在触摸屏四边均镀上狭长的电极，在导电体内形成一个低电压交流电场。在触摸屏幕时，由于人体电场，手指与导体层间会形成一个耦合电容，四边电极发出的电流会流向触点，而电流强弱与手指到电极的距离成正比，位于触摸屏幕后的控制器便会计算电流的比例及强弱，准确算出触摸点的位置。电容触摸屏的双玻璃不但能保护导体及感应器，更有效地防止外在环境因素对触摸屏造成影响，就算屏幕沾有污秽、尘埃或油渍，电容式触摸屏依然能准确算出触摸位置。
+  </p>
+  <p>
+    电容式触摸屏是在玻璃表面贴上一层透明的特殊金属导电物质。当手指触摸在金属层上时，触点的电容就会发生变化，使得与之相连的振荡器频率发生变化，通过测量频率变化可以确定触摸位置获得信息。由于电容随温度、湿度或接地情况的不同而变化，故其稳定性较差，往往会产生漂移现象。该种触摸屏适用于系统开发的调试阶段。
+  </p>
+  <h2>电容触摸屏的缺陷</h2>
+  <p>
+    电容触摸屏的透光率和清晰度优于四线电阻屏，当然还不能和表面声波屏和五线电阻屏相比。电容屏反光严重，而且，电容技术的四层复合触摸屏对各波长光的透光率不均匀，存在色彩失真的问题，由于光线在各层间的反射，还造成图像字符的模糊。
+  </p>
+  <p style="text-align: center;font-size: 12px;">
+    <canvas id="canvas" width="255" height="255"></canvas>
+    <div style="text-align: center;font-size: 12px;">配图1</div>
+  </p>
+</div>
+
+<script>
+  var img = new Image();
+  img.src = 'http://mt2.google.cn/vt/lyrs=m@180000000&hl=zh-CN&gl=cn&src=app&s=Gal&x=9&y=8&z=4';
+  img.crossOrigin = "Anonymous";
+  img.onload = () => {
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    var canvas1 = document.getElementById('canvas1');
+    var ctx1 = canvas1.getContext('2d');
+    ctx1.drawImage(img, 0, 0);
+  };
+  function copyContent() {
+    const val = document.getElementById('content');
+    var canvas = val.getElementsByTagName('canvas');
+    for(var i = 0;i<canvas.length;i++) {
+      var cDom = canvas[i];
+      var _img = new Image();
+      _img.classList.add('img-copy');
+      _img.src = cDom.toDataURL("image/jpeg");
+      var pDom = cDom.parentNode;
+      pDom.appendChild(_img);
+    }
+    window.getSelection().selectAllChildren(val);
+    document.execCommand('Copy');
+    setTimeout(() => {
+      var imgs = document.getElementsByClassName("img-copy");
+      for(var i = 0;i<imgs.length;i++){
+        var img = imgs[i];
+        var pDom = img.parentNode;
+        pDom.removeChild(img);
+      }
+      window.getSelection().empty();
+    })
+  }
+</script>
+</body>
+</html>
