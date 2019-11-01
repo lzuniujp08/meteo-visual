@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<div>
+  <canvas id="canvas" height="600" width="600"></canvas>
+</div>
+
+<script>
+  var canvas, ctx, w;
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
+  w = canvas.width;
+  var dr = (w / 2 - 40) / 3;
+  var wr = dr / 5;
+  var wsData = [{"name":"N","min":348.75,"avg":2.0397482215467657,"max":11.25,"wind":6.344859066529727},{"name":"NNE","min":11.25,"avg":2.5052788349739967,"max":33.75,"wind":15.34862490014835},{"name":"NE","min":33.75,"avg":1.8513986238927758,"max":56.25,"wind":9.791167408421773},{"name":"ENE","min":56.25,"avg":1.6131435047316576,"max":78.75,"wind":10.418806344859066},{"name":"E","min":78.75,"avg":1.5071856459880277,"max":101.25,"wind":7.622960173456579},{"name":"ESE","min":101.25,"avg":1.4300000179999994,"max":123.75,"wind":3.994065959146411},{"name":"SE","min":123.75,"avg":1.9796442938339929,"max":146.25,"wind":5.774278215223097},{"name":"SSE","min":146.25,"avg":2.3611814601687766,"max":168.75,"wind":5.409106470386854},{"name":"S","min":168.75,"avg":2.1137864288543717,"max":191.25,"wind":5.876982768458291},{"name":"SSW","min":191.25,"avg":1.5711864581598096,"max":213.75,"wind":4.712997831792765},{"name":"SW","min":213.75,"avg":1.39724519752066,"max":236.25,"wind":4.142416980486135},{"name":"WSW","min":236.25,"avg":1.360481116219932,"max":258.75,"wind":3.3207805546045877},{"name":"W","min":258.75,"avg":1.323673483673469,"max":281.25,"wind":2.795846171402488},{"name":"WNW","min":281.25,"avg":1.6921671195822454,"max":303.75,"wind":4.370649321008787},{"name":"NW","min":303.75,"avg":2.0382488659907847,"max":326.25,"wind":4.95264178934155},{"name":"NNW","min":326.25,"avg":1.8367347150510196,"max":348.75,"wind":4.47335387424398},{"name":"PPC","min":348.75,"avg":0.11403508771929828,"max":371.25,"wind":0.6504621704895585},{"name":"VRB","min":371.25,"avg":0.0,"max":393.75,"wind":0.0}]
+  
+  for(let i = 0;i<3;i++) {
+    drawCircle(i);
+  }
+  drawSplitLine();
+  drawWindRose();
+  
+  function drawWindRose() {
+    ctx.beginPath();
+    for (var i = 0;i<16;i++) {
+      var d = wsData[i];
+      var r = wr * d.avg;
+      var theta = i * (Math.PI * 2) / 16;
+      theta = Math.PI * 0.5 - theta;
+      var x = w/2 + Math.cos(theta) * r;
+      var y = w/2 - Math.sin(theta) * r;
+      ctx.textAlign = (i > 0 && i <= 8) ? 'right' : 'left';
+      if (theta === Math.PI / 2 || theta === Math.PI * 1.5) ctx.textAlign = "center";
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.closePath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000000';
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(146,187,255,0.4)';
+    ctx.fill();
+  }
+  function drawSplitLine() {
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#7a7a7a';
+    var r = dr * 3;
+    for (var i = 0;i<16;i++) {
+      var theta = i * (Math.PI * 2) / 16;
+      var x = w/2 + Math.cos(theta) * r;
+      var y = w/2 - Math.sin(theta) * r;
+      ctx.moveTo(w/2, w/2);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  }
+  function drawCircle(index) {
+    ctx.beginPath();
+    ctx.font = 'normal 13px 微软雅黑';
+    var r = dr * (index + 1);
+    for (var i = 0;i<16;i++) {
+      var theta = i * (Math.PI * 2) / 16;
+      theta = Math.PI * 0.5 - theta;
+      var x = w/2 + Math.cos(theta) * r;
+      var y = w/2 - Math.sin(theta) * r;
+      ctx.textAlign = (i > 4 && i <= 12) ?'right':'left';
+      if(theta===Math.PI/2 ||theta===Math.PI*1.5) ctx.textAlign = "center";
+      if(i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+      if(index === 2) {
+        var d = wsData[i];
+        var tx = w/2 + Math.cos(theta) * (r + 15);
+        var ty = w/2 - Math.sin(theta) * (r + 15);
+        ctx.textAlign = (i > 0 && i <= 8) ?'left':'right';
+        if(theta===Math.PI/2 || theta===Math.PI*1.5) ctx.textAlign = "center";
+        ctx.fillText(d.name, tx, ty);
+      }
+    }
+    // 绘制文字
+    var theta = Math.PI * 0.5625;
+    var tx = w/2 + Math.cos(theta) * (r + 1);
+    var ty = w/2 - Math.sin(theta) * (r + 1);
+    var txt = ((index + 1) * 5).toString();
+    ctx.font = 'normal 12px 微软雅黑';
+    ctx.fillStyle = '#000000';
+    ctx.fillText(txt, tx, ty);
+    
+    ctx.closePath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#7a7a7a';
+    ctx.stroke();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<div>
+  <canvas id="canvas" height="600" width="600"></canvas>
+</div>
+
+<script>
+  var canvas, ctx, w;
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
+  w = canvas.width;
+  var dr = (w / 2 - 40) / 2;
+  var wr = dr / 5;
+  var wsData = [{"name":"0°","min":355.0,"avg":2.043805325309731,"max":5.0,"wind":2.5790254479059684},{"name":"10°","min":5.0,"avg":2.0299363277707,"max":15.0,"wind":3.5832477462056374},{"name":"20°","min":15.0,"avg":2.4970198884437136,"max":25.0,"wind":6.892616683784092},{"name":"30°","min":25.0,"avg":2.5657657951351402,"max":35.0,"wind":7.6001369394043135},{"name":"40°","min":35.0,"avg":1.9228365614903828,"max":45.0,"wind":4.747232682871163},{"name":"50°","min":45.0,"avg":1.73123030479495,"max":55.0,"wind":3.617482597284035},{"name":"60°","min":55.0,"avg":1.6537634599462356,"max":65.0,"wind":4.245121533721329},{"name":"70°","min":65.0,"avg":1.5852018173094184,"max":75.0,"wind":5.089581193655142},{"name":"80°","min":75.0,"avg":1.6131979881725904,"max":85.0,"wind":4.496177108296245},{"name":"90°","min":85.0,"avg":1.473404274964539,"max":95.0,"wind":3.218076001369394},{"name":"100°","min":95.0,"avg":1.4448979742857129,"max":105.0,"wind":2.795846171402488},{"name":"110°","min":105.0,"avg":1.4987421566037726,"max":115.0,"wind":1.814447107155084},{"name":"120°","min":115.0,"avg":1.441481499999999,"max":125.0,"wind":1.5405682985279012},{"name":"130°","min":125.0,"avg":1.7042424424242413,"max":135.0,"wind":1.8829168093118793},{"name":"140°","min":135.0,"avg":2.066423385547444,"max":145.0,"wind":3.126783065160333},{"name":"150°","min":145.0,"avg":2.295798345462183,"max":155.0,"wind":2.7159648522195594},{"name":"160°","min":155.0,"avg":2.337438442463053,"max":165.0,"wind":2.3165582563049183},{"name":"170°","min":165.0,"avg":2.5995215639234446,"max":175.0,"wind":2.385027958461714},{"name":"180°","min":175.0,"avg":2.0625550845814953,"max":185.0,"wind":2.590437064932101},{"name":"190°","min":185.0,"avg":1.769098732274677,"max":195.0,"wind":2.6589067670888964},{"name":"200°","min":195.0,"avg":1.5967567790270267,"max":205.0,"wind":2.1111491498345316},{"name":"210°","min":205.0,"avg":1.5333333464285719,"max":215.0,"wind":1.9171516603902774},{"name":"220°","min":215.0,"avg":1.3994318364772729,"max":225.0,"wind":2.0084445965993383},{"name":"230°","min":225.0,"avg":1.384563775436241,"max":235.0,"wind":1.700330936893758},{"name":"240°","min":235.0,"avg":1.4189189356756753,"max":245.0,"wind":1.6889193198676253},{"name":"250°","min":245.0,"avg":1.3409836257377057,"max":255.0,"wind":1.3922172771881776},{"name":"260°","min":255.0,"avg":1.317699131150443,"max":265.0,"wind":1.2895127239529842},{"name":"270°","min":265.0,"avg":1.2515151646464644,"max":275.0,"wind":1.1297500855871276},{"name":"280°","min":275.0,"avg":1.4126984266666673,"max":285.0,"wind":1.4378637452927079},{"name":"290°","min":285.0,"avg":1.5641975444444436,"max":295.0,"wind":1.8486819582334817},{"name":"300°","min":295.0,"avg":1.882812522708332,"max":305.0,"wind":2.1910304690174596},{"name":"310°","min":305.0,"avg":2.1495652335652147,"max":315.0,"wind":2.6246719160104988},{"name":"320°","min":315.0,"avg":1.916666685897435,"max":325.0,"wind":1.780212256076686},{"name":"330°","min":325.0,"avg":1.6816326738775516,"max":335.0,"wind":1.6775077028414926},{"name":"340°","min":335.0,"avg":1.8744318422727255,"max":345.0,"wind":2.0084445965993383},{"name":"350°","min":345.0,"avg":2.0612069174999976,"max":355.0,"wind":2.647495150062764},{"name":"PPC","min":"NaN","avg":0.11403508771929828,"max":"NaN","wind":0.6504621704895585},{"name":"VRB","min":"NaN","avg":0.0,"max":"NaN","wind":0.0}]
+  
+  for(let i = 0;i<2;i++) {
+    drawCircle(i);
+  }
+  drawSplitLine();
+  drawWindRose();
+  
+  function drawWindRose() {
+    ctx.beginPath();
+    for (var i = 0;i < 36;i++) {
+      var d = wsData[i];
+      var r = wr * d.avg;
+      var theta = i * (Math.PI * 2) / 36;
+      theta = Math.PI * 0.5 - theta;
+      var x = w/2 + Math.cos(theta) * r;
+      var y = w/2 - Math.sin(theta) * r;
+      ctx.textAlign = (i > 4 && i <= 12) ? 'right' : 'left';
+      if (theta === Math.PI / 2 || theta === Math.PI * 1.5) ctx.textAlign = "center";
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.closePath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000000';
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(146,187,255,0.4)';
+    ctx.fill();
+  }
+  function drawSplitLine() {
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#7a7a7a';
+    var r = dr * 2;
+    for (var i = 0;i<36;i++) {
+      var theta = i * (Math.PI * 2) / 36;
+      var x = w/2 + Math.cos(theta) * r;
+      var y = w/2 - Math.sin(theta) * r;
+      ctx.moveTo(w/2, w/2);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  }
+  function drawCircle(index) {
+    ctx.beginPath();
+    ctx.font = 'normal 13px 微软雅黑';
+    var r = dr * (index + 1);
+    for (var i = 0;i<36;i++) {
+      var theta = i * (Math.PI * 2) / 36;
+      theta = Math.PI * 0.5 - theta;
+      var x = w/2 + Math.cos(theta) * r;
+      var y = w/2 - Math.sin(theta) * r;
+      ctx.textAlign = (i > 4 && i <= 12) ?'right':'left';
+      if(theta===Math.PI/2 ||theta===Math.PI*1.5) ctx.textAlign = "center";
+      if(i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+      if(index === 1) {
+        var tx = w/2 + Math.cos(theta) * (r + 12);
+        var ty = w/2 - Math.sin(theta) * (r + 12);
+        ctx.textAlign = (i > 0 && i <= 18) ?'left':'right';
+        if(theta===Math.PI/2 || theta===Math.PI*1.5) ctx.textAlign = "center";
+        ctx.fillText((i * 10).toString(), tx, ty);
+      }
+    }
+    // 绘制文字
+    var theta = Math.PI * 0.53125;
+    var tx = w/2 + Math.cos(theta) * (r + 3);
+    var ty = w/2 - Math.sin(theta) * (r + 3);
+    var txt = ((index + 1) * 5).toString();
+    ctx.font = 'normal 12px 微软雅黑';
+    ctx.fillStyle = '#000000';
+    ctx.fillText(txt, tx, ty);
+    
+    ctx.closePath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#7a7a7a';
+    ctx.stroke();
+  }
+</script>
+</body>
+</html>
