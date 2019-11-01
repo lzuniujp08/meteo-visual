@@ -161,17 +161,6 @@
     }
     return index;
   }
-
-  function randomNum(minNum,maxNum){
-    switch(arguments.length){
-      case 1:
-        return parseFloat(Math.random()*minNum+1,10);
-      case 2:
-        return parseFloat(Math.random()*(maxNum-minNum+1)+minNum,10);
-      default:
-        return 0;
-    }
-  }
   
   $.get("datas/data.json", (res) => {
     data = res.data;
