@@ -122,3 +122,21 @@ $size: 20px;
     }
   }
 }
+
+.grid-params {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 15px;
+  background: white;
+  z-index: 99;
+  font-size: 12px;
+  li {
+    line-height: 28px;
+    list-style: none;
+    &:last-child {
+      text-align: center;
+      margin-top: 10px;
+    }
+  }
+}

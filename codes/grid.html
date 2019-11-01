@@ -49,7 +49,6 @@
   map.addLayer(vector);
 
   function generateGrid() {
-    source.clear();
     var bound = $("#bound").val(),
       size = Number($("#size").val());
     var bounds = bound.split(",").map(Number);
@@ -80,6 +79,7 @@
       type: "FeatureCollection",
       features: []
     };
+
     var deltaLon = bound[2] - bound[0],
       deltaLat = bound[3] - bound[1];
     var numLon = Math.ceil(deltaLon / size),
@@ -97,10 +97,7 @@
         // 网格面
         var featG = {
           "type":"Feature",
-          "properties":{
-            x: j,
-            y: i
-          },
+          "properties":{},
           "geometry":{
             "type":"Polygon",
             "coordinates":[[
@@ -116,10 +113,7 @@
         // 中心点
         var featC = {
           "type":"Feature",
-          "properties":{
-            x: j,
-            y: i
-          },
+          "properties":{},
           "geometry":{
             "type":"Point",
             "coordinates":[lonC, latC]
