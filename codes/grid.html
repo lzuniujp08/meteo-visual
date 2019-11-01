@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map">
+  <div class="grid-params">
+    <li>计算范围：<input type="text" id="bound" value="115.0,39.5,117.5,41.0"></li>
+    <li>网格大小：<input type="text" id="size" value="0.25"></li>
+    <li><input type="button" value="生成网格" onclick="generateGrid()"> </li>
+  </div>
+</div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script>
+  var vec_w = getTilelayer("dark");
+  map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([98.633, 31.607]),
+      zoom:4,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+
+  var source = new ol.source.Vector({
+    features: []
+  });
+  var vector = new ol.layer.Vector({
+    source: source,
+    zIndex: 1,
+    style: new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 5,
+        fill: null,
+        stroke: new ol.style.Stroke({color: 'red', width: 1})
+      }),
+      stroke: new ol.style.Stroke({color: 'grey', width: 1})
+    })
+  });
+  map.addLayer(vector);
+
+  function generateGrid() {
+    source.clear();
+    var bound = $("#bound").val(),
+      size = Number($("#size").val());
+    var bounds = bound.split(",").map(Number);
+    var gridData = createGrid(bounds, size);
+    var format = new ol.format.GeoJSON();
+    var options = {
+      dataProjection: 'EPSG:4326',
+      featureProjection: 'EPSG:3857'
+    };
+    var gridFeatures = format.readFeatures(gridData.grid, options);
+    var centFeatures = format.readFeatures(gridData.center, options);
+    source.addFeatures(gridFeatures);
+    source.addFeatures(centFeatures);
+  }
+
+  /**
+   * 创建网格
+   * @param bound
+   * @param size
+   * @returns {{grid: {features: Array, type: string}, center: {features: Array, type: string}}}
+   */
+  function createGrid(bound, size) {
+    var grid = {
+      type: "FeatureCollection",
+      features: []
+    };
+    var center = {
+      type: "FeatureCollection",
+      features: []
+    };
+    var deltaLon = bound[2] - bound[0],
+      deltaLat = bound[3] - bound[1];
+    var numLon = Math.ceil(deltaLon / size),
+      numLat = Math.ceil(deltaLat/ size);
+    var minLon = bound[0],
+      maxLat = bound[3];
+    for(var i = 0; i < numLat; i++) {
+      var lat1 = maxLat - i * size,
+        lat2 = maxLat - (i + 1) * size;
+      var latC = (lat1 + lat2) / 2;
+      for(var j = 0; j < numLon; j++) {
+        var lon1 = minLon + j * size,
+          lon2 = minLon + (j + 1) * size;
+        var lonC = (lon1 + lon2) / 2;
+        // 网格面
+        var featG = {
+          "type":"Feature",
+          "properties":{
+            x: j,
+            y: i
+          },
+          "geometry":{
+            "type":"Polygon",
+            "coordinates":[[
+              [lon1, lat1],
+              [lon2, lat1],
+              [lon2, lat2],
+              [lon1, lat2],
+              [lon1, lat1]
+            ]]
+          }
+        };
+        grid.features.push(featG);
+        // 中心点
+        var featC = {
+          "type":"Feature",
+          "properties":{
+            x: j,
+            y: i
+          },
+          "geometry":{
+            "type":"Point",
+            "coordinates":[lonC, latC]
+          }
+        };
+        center.features.push(featC);
+      }
+    }
+    return {
+      grid: grid,
+      center: center
+    }
+  }
+</script>
+</body>
