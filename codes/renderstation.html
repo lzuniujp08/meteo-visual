@@ -155,41 +155,6 @@
     }
     return canvas;
   }
-
-  function renderStation() {
-    var mapSize = map.getSize();
-    var zoom = map.getView().getZoom();
-    var extent = map.getView().calculateExtent();
-    r = zoom * 0.6;
-    r = r<3 ? 3: r;
-    r = r > 10 ? 10: r;
-    var canvas = document.createElement('canvas');
-    canvas.setAttribute('width', mapSize[0]);
-    canvas.setAttribute('height', mapSize[1]);
-    var ctx = canvas.getContext('2d');
-    for(var i = 0;i<data.length;i++) {
-      var d = data[i];
-      var coord = ol.proj.fromLonLat([d["lon"], d["lat"]]);
-      if(ol.extent.containsCoordinate(extent, coord)) {
-        ctx.fillStyle = 'red';
-        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-        ctx.strokeWidth = 1;
-        ctx.beginPath();
-        var pixel = map.getPixelFromCoordinate(coord);
-        // x, y, r, start, end
-        var x = pixel[0],
-          y = pixel[1];
-        ctx.arc(x, y, r, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.stroke();
-      }
-    }
-    var source = new ol.source.ImageStatic({
-      url: canvas.toDataURL("image/png"),
-      imageExtent: extent
-    });
-    imageLayer1.setSource(source);
-  }
   
   function getLonLatIndex(lon, lat) {
     var index = -1;
@@ -201,40 +166,9 @@
     }
     return index;
   }
-
-  function randomNum(minNum,maxNum){
-    switch(arguments.length){
-      case 1:
-        return parseFloat(Math.random()*minNum+1,10);
-      case 2:
-        return parseFloat(Math.random()*(maxNum-minNum+1)+minNum,10);
-      default:
-        return 0;
-    }
-  }
-  
-  function getRandomData(){
-    var datas = [];
-    var count = 5;
-    for(var i = 0;i<count;i++) {
-      var lon = randomNum(chinaB[0], chinaB[2]),
-        lat = randomNum(chinaB[1], chinaB[3]);
-      var name = 'station' + i,
-        val = randomNum(0, 40);
-      datas.push({
-        "n":name,
-        "pre_1h":val,
-        "lon":lon,
-        "lat":lat
-      })
-    }
-    
-    return datas;
-  }
   
   $.get("datas/data.json", (res) => {
     data = res.data;
-    // data = [{"n":"station0","pre_1h":5.9026646030825365,"lon":137.50616001223028,"lat":28.972454524046075},{"n":"station1","pre_1h":36.363185887929,"lon":76.36228734863334,"lat":13.390200765846693},{"n":"station2","pre_1h":15.410571990727478,"lon":89.79944247305134,"lat":12.101315294066067},{"n":"station3","pre_1h":17.326443330443563,"lon":90.94923190060842,"lat":35.511758305924374},{"n":"station4","pre_1h":38.215464648016265,"lon":118.79236636904156,"lat":45.776581887742275}];
     var source = new ol.source.ImageCanvas({
         canvasFunction: canvasFunction,
         projection: 'EPSG:3857'
