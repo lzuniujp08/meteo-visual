@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>pdf</title>
+  <style>
+    html,
+    body,
+    #pdfBox {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #pdfBox {
+      width: 800px;
+      height: 1000px;
+    }
+  </style>
+  <script src="pdfobject.js"></script>
+</head>
+<body>
+<div id="pdfBox"></div>
+<script>
+  PDFObject.embed("./Scala语言规范.pdf", "#pdfBox");
+</script>
+</body>
+</html>
