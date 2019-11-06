@@ -65,6 +65,12 @@
 				<div id="vopacity" class="value">100</div>
 				<div class="slider" id="opacity"></div>
 			</li>
+			<li>
+				<label>裁剪区：</label>
+				<input id="clipExtent" type="text" value="" placeholder="xmin, ymin, xmax, ymax">
+				<input type="button" value="绘制" onclick="drawRect()">
+				<input type="button" value="裁剪" onclick="clipMap()">
+			</li>
 		</ul>
 		<div id="map" class="map"></div>
 		<script>
@@ -109,6 +115,34 @@
 				opacity: 1
 			});
 			map.addLayer(heatmap);
+			
+			var source = new ol.source.Vector();
+			var vector = new ol.layer.Vector({
+				source: source,
+				style: styleFunction
+			});
+			map.addLayer(vector);
+			
+			var clipGeom = null;
+			var draw = new ol.interaction.Draw({
+				source: source,
+				type: 'Circle',
+				geometryFunction: ol.interaction.Draw.createBox(),
+				freehand: false,//是否手绘,
+				style: styleFunction,
+				stopClick: true
+			});
+			map.addInteraction(draw);
+			draw.setActive(false);
+			draw.on("drawend", function (evt) {
+				draw.setActive(false);
+				map.getTargetElement().style.cursor = "default";
+				var geom = evt.feature.getGeometry();
+				var coords = geom.getExtent();
+				$("#clipExtent").val(coords.map(function(val) {
+					return val.toFixed(0)
+				}));
+			});
 
 			$("#radius").slider({
 				min: 0,
@@ -139,6 +173,61 @@
 					heatmap.setOpacity(ui.value / 100);
 					$("#vopacity").html(ui.value);
 				}
+			});
+			
+			
+			function styleFunction() {
+				return new ol.style.Style({
+					stroke: new ol.style.Stroke({
+						color: '#2f65b8',
+						width: 2
+					})
+				})
+			}
+			
+			function drawRect() {
+				draw.setActive(true);
+				map.getTargetElement().style.cursor = "crosshair";
+				source.clear();
+				clipGeom = null;
+			}
+			function clipMap() {
+				var extent = $("#clipExtent").val().split(",").map(Number);
+				clipGeom = ol.geom.Polygon.fromExtent(extent);
+				setTimeout(() => {
+					map.getView().fit(extent);
+				}, 200);
+			}
+			map.on('precompose', clip);
+			
+			function clip(evt) {
+				if (clipGeom) {
+					var canvas=evt.context;
+					canvas.save();
+					var coords = clipGeom.getCoordinates();
+					canvas.beginPath();
+					createClip(coords[0], canvas);
+					canvas.clip();
+				}
+			}
+			
+			function createClip(coords, canvas) {
+				for (var i = 0, cout = coords.length; i < cout; i++) {
+					//获取屏幕坐标
+					var screenCoord = map.getPixelFromCoordinate(coords[i]);
+					var x = screenCoord[0],
+						y = screenCoord[1];
+					if (i === 0) {
+						canvas.moveTo(x, y);
+					} else {
+						canvas.lineTo(x, y);
+					}
+				}
+				canvas.closePath();
+			}
+			map.on('postcompose', function(event) {
+				var ctx = event.context;
+				ctx.restore();
 			});
 		</script>
 	</body>
