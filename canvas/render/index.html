@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>渲染图片</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+</head>
+
+<body>
+    <script>
+        console.time("耗时时间：");
+        var width = 0,
+          height = 0;
+        $.get('datas/Temperature_surface.csv', function (result) {
+            var data = [];
+            result = result.split('\n');
+            // console.log(result.length);
+            for (var i = 0; i < result.length; i++) {
+                if (result[i].length > 0) {
+                    var cols = result[i].split(',');
+                    data.push(cols);
+                }
+            }
+
+            width = data[0].length;
+            height = data.length;
+            
+            console.log([width, height].join(', '));
+
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext("2d");
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            adjustRatio(context);
+            document.body.appendChild(canvas);
+
+            var image = context.createImageData(width, height);
+
+            var legend = new Legend();
+            var k = 0;
+            for (var j = 0, l = 0; j < height; j++) {
+                for (var i = 0; i < width; i++, l += 4) {
+                    var value = data[j][i];
+                    var c = legend.getColor(value).rgb;
+                    image.data[l + 0] = c[0];
+                    image.data[l + 1] = c[1];
+                    image.data[l + 2] = c[2];
+                    image.data[l + 3] = 255;
+                    k++;
+                }
+            }
+            context.putImageData(image, 0, 0);
+            console.timeEnd("耗时时间：")
+        });
+
+        var Legend = function () {
+            var options = {
+                width: 100,
+                height: 15,
+                range: [218, 340],
+                gradient: {
+                    0.1: '#0000FF',
+                    0.2: '#0033FF',
+                    0.3: '#0066FF',
+                    0.4: '#0099FF',
+                    0.5: '#00CCFF',
+                    0.6: '#FFFF66',
+                    0.7: '#F3C04D',
+                    0.8: '#E78034',
+                    0.9: '#DA411A',
+                    1.0: '#CE0101',
+                }
+            };
+
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = options.width;
+            canvas.height = options.height;
+            var grad = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+            for (var gradient in options.gradient) {
+                grad.addColorStop(gradient, options.gradient[gradient]);
+            }
+            context.fillStyle = grad;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            this.imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+            this.d2Hex = function (d) {
+                // Converts a decimal number to a two digit Hex value
+                var hex = Number(d).toString(16);
+                while (hex.length < 2) {
+                    hex = "0" + hex;
+                }
+                return hex.toUpperCase();
+            };
+            this.getRgbColor = function (point) {
+                var imageData = this.imageData || context.getImageData(0, 0, canvas.width, canvas.height);
+                var data = imageData.data;
+                var i = ((point.Y * canvas.width) + point.X) * 4;
+                var rgb = [],
+                    color = '#',
+                    objRgbColor = {
+                        "rgb": rgb,
+                        "color": color
+                    };
+                for (var j = 0; j < 3; j++) {
+                    rgb.push(data[i + j]);
+                    color += this.d2Hex(data[i + j]);
+                }
+                objRgbColor.color = color;
+                return objRgbColor;
+            };
+            this.getColor = function (value) {
+                var colorValue = value - options.range[0];
+                var point = Math.round((colorValue * canvas.width) / (options.range[options.range.length - 1] -
+                    options.range[0]));
+                return this.getRgbColor({
+                    X: point,
+                    Y: 1
+                });
+            };
+        };
+
+        function adjustRatio(context) {
+            var backingStore = context.backingStorePixelRatio ||
+                context.webkitBackingStorePixelRatio ||
+                context.mozBackingStorePixelRatio ||
+                context.msBackingStorePixelRatio ||
+                context.oBackingStorePixelRatio ||
+                context.backingStorePixelRatio || 1;
+            var pixelRatio = (window.devicePixelRatio || 1) / backingStore;
+            var canvasWidth = context.canvas.width;
+            var canvasHeight = context.canvas.height;
+            context.canvas.width = canvasWidth * pixelRatio;
+            context.canvas.height = canvasHeight * pixelRatio;
+            context.canvas.style.width = canvasWidth + 'px';
+            context.canvas.style.height = canvasHeight + 'px';
+            // console.log(context.canvas.height, canvasHeight);
+            context.scale(pixelRatio, pixelRatio);
+        }
+    </script>
+</body>
+
+</html>
