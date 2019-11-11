@@ -58,8 +58,7 @@
     ];
     
     if(isOnLand(coord)) {
-      var index = i * numLon + j;
-      var val = data[index];
+      var val = data[i][j];
       var color;
       if (val > 0.33 && val <= 0.66) {
         color = "orange";
@@ -143,8 +142,9 @@
       var lat1 = maxLat - i * size,
         lat2 = maxLat - (i + 1) * size;
       var latC = (lat1 + lat2) / 2;
+      data[i] = [];
       for(var j = 0; j < numLon; j++) {
-        data.push(Math.random())
+        data[i][j] = Math.random()
         var lon1 = minLon + j * size,
           lon2 = minLon + (j + 1) * size;
         var lonC = (lon1 + lon2) / 2;
