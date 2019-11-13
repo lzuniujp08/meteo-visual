@@ -55,12 +55,13 @@
 
   var landData = format.readFeatures(chinaZone, options);
   landGeom = landData[0].getGeometry();
-  
+
   function styleFunction(feat) {
+    // i为lat，j为lon
     var i = feat.get("i"),
       j = feat.get("j"),
-      isLand = feat.get("land");
-    if(isLand) {
+      land = feat.get("land");
+    if(land) {
       var val = data[i][j];
       var color;
       if (val > 0.33 && val <= 0.66) {
@@ -71,6 +72,10 @@
         color = 'yellow';
       }
       return new ol.style.Style({
+        // stroke: new ol.style.Stroke({
+        //   color: 'grey',
+        //   width: 1
+        // }),
         fill: new ol.style.Fill({
           color: color,
         })
@@ -86,67 +91,79 @@
     createGrid(bounds, size);
     console.timeEnd('Time Test')
   }
-  
+
   function isOnLand(coord) {
-    var is = false;
-    for(var i = 0;i<landData.length;i++){
-      var geom = landData[i].getGeometry();
-      if (geom.intersectsCoordinate(coord)) {
-        is = true;
-        break;
-      }
-    }
-    return is;
+    return landGeom.intersectsCoordinate(coord);
   }
 
+  /**
+   * 创建网格
+   * @param bound
+   * @param size
+   * @returns {{grid: {features: Array, type: string}, center: {features: Array, type: string}}}
+   */
   function createGrid(bound, size) {
-    var gridData = {
-      type: "FeatureCollection",
-      features: []
-    };
     var deltaLon = bound[2] - bound[0],
       deltaLat = bound[3] - bound[1];
-    var numLon, numLat;
-    numLon = Math.ceil(deltaLon / size);
-    numLat = Math.ceil(deltaLat/ size);
-    var minLon = bound[0],
-      maxLat = bound[3];
-    for(var i = 0; i < numLat; i++) {
-      var lat1 = maxLat - i * size,
-        lat2 = maxLat - (i + 1) * size;
-      var latC = (lat1 + lat2) / 2;
+    var numLat;
+    numLat = Math.ceil(deltaLat / size);
+    for (var i = 0; i < numLat; i++) {
       data[i] = [];
-      for(var j = 0; j < numLon; j++) {
-        data[i][j] = Math.random();
-        var lon1 = minLon + j * size,
-          lon2 = minLon + (j + 1) * size;
-        var lonC = (lon1 + lon2) / 2;
-        var coord = ol.proj.fromLonLat([lonC, latC]);
-        var prop = {
-          i: i,
-          j: j,
-          land: isOnLand(coord)
-        };
-        // 网格面
-        var featG = {
-          "type":"Feature",
-          "properties": prop,
-          "geometry":{
-            "type":"Polygon",
-            "coordinates":[[
-              [lon1, lat1],
-              [lon2, lat1],
-              [lon2, lat2],
-              [lon1, lat2],
-              [lon1, lat1]
-            ]]
-          }
-        };
-        gridData.features.push(featG);
-      }
+      getFeatures(bound, i, deltaLon, size)
+        .then(res => {
+          var json = {
+            "type": "FeatureCollection",
+            features: res
+          };
+          var features = format.readFeatures(json, options);
+          source.addFeatures(features);
+        })
     }
-    var gridFeatures = format.readFeatures(gridData, options);
-    source.addFeatures(gridFeatures);
+  }
+
+  function getFeatures(bound, i, deltaLon, size) {
+    var promise = new Promise(function(resolve, reject) {
+      window.setTimeout(function() {
+        var features = [];
+        var minLon = bound[0],
+          maxLat = bound[3],
+          numLon = Math.ceil(deltaLon / size);
+
+        var lat1 = maxLat - i * size,
+          lat2 = maxLat - (i + 1) * size;
+        var latC = (lat1 + lat2) / 2;
+        for(var j = 0; j < numLon; j++) {
+          var lon1 = minLon + j * size,
+            lon2 = minLon + (j + 1) * size;
+          var lonC = (lon1 + lon2) / 2;
+          var coord = ol.proj.fromLonLat([lonC, latC]);
+          var prop = {
+            i: i,
+            j: j,
+            land: isOnLand(coord)
+          };
+          data[i][j] = Math.random();
+          // 网格面
+          var featG = {
+            "type":"Feature",
+            "properties": prop,
+            "geometry":{
+              "type":"Polygon",
+              "coordinates":[[
+                [lon1, lat1],
+                [lon2, lat1],
+                [lon2, lat2],
+                [lon1, lat2],
+                [lon1, lat1]
+              ]]
+            }
+          };
+          features.push(featG);
+        }
+        resolve(features);
+      });
+    });
+    return promise;
   }
 </script>
 </body>
