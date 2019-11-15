@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+  <link rel="stylesheet" href="css/demo.css" type="text/css">
+</head>
+<body>
+<div id="map">
+  <div class="grid-params">
+    <li>计算范围：<input type="text" id="bound" value="118,20,125,30"></li>
+    <li>网格大小：<input type="text" id="size" value="0.05"></li>
+    <li><input type="button" value="生成网格" onclick="generateGrid()"> </li>
+  </div>
+</div>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+<script src="js/demo.js"></script>
+<script src="datas/china.js"></script>
+<script>
+  var vec_w = getTilelayer("dark");
+
+  var data = [],
+    landGeom,
+    bounds,
+    size,
+    format = new ol.format.GeoJSON(),
+    options = {
+      dataProjection: 'EPSG:4326',
+      featureProjection: 'EPSG:3857'
+    },
+    numLat,
+    numLon;
+  
+  var map = new ol.Map({
+    controls: ol.control.defaults({
+      attribution: false
+    }),
+    target: 'map',
+    layers: [vec_w],
+    view: new ol.View({
+      center: [13420782.06334928, 3042658.7245279695],
+      zoom:7,
+      minZoom:0,
+      maxZoom:18
+    })
+  });
+
+  var imageLayer = new ol.layer.Image({
+    source: null,
+    opacity: 0.65
+  });
+  map.addLayer(imageLayer);
+  
+  function generateGrid() {
+    bounds = $("#bound").val().split(",").map(Number);
+    size = Number($("#size").val());
+    var deltaLon = bounds[2] - bounds[0],
+      deltaLat = bounds[3] - bounds[1];
+    numLat = Math.ceil(deltaLat / size);
+    numLon = Math.ceil(deltaLon / size);
+    var source = new ol.source.ImageCanvas({
+      canvasFunction: canvasFunction
+    });
+    imageLayer.setSource(source);
+  }
+  
+  function getResSize() {
+    var topLeft = ol.proj.fromLonLat([bounds[0], bounds[3]]);
+    var topLeftDelt = ol.proj.fromLonLat([bounds[0] + size, bounds[3] - size]);
+    var topLeftSrc = map.getPixelFromCoordinate(topLeft);
+    var topLeftDeltSrc = map.getPixelFromCoordinate(topLeftDelt);
+    return [
+      Math.abs(topLeftSrc[0] - topLeftDeltSrc[0]),
+      Math.abs(topLeftSrc[1] - topLeftDeltSrc[1])
+    ];
+  }
+  
+
+  var landData = format.readFeatures(chinaZone, options);
+  landGeom = landData[0].getGeometry();
+
+  function isOnLand(coord) {
+    return landGeom.intersectsCoordinate(coord);
+  }
+  
+  function canvasFunction(extent, res, pixelRatio, size) {
+    var mapExtent = map.getView().calculateExtent();
+    var mapTopLeft = [mapExtent[0], mapExtent[3]];
+    var topLeftM = [extent[0], extent[3]];
+    var tlSrc = map.getPixelFromCoordinate(topLeftM);
+    var tlMapSrc = map.getPixelFromCoordinate(mapTopLeft);
+    var xOff = tlMapSrc[0] - tlSrc[0],
+      yOff = tlMapSrc[1] - tlSrc[1];
+    
+    var canvas = document.createElement('canvas');
+    canvas.width = size[0];
+    canvas.height = size[1];
+    var ctx = canvas.getContext('2d');
+    ctx.scale(pixelRatio, pixelRatio);
+    
+    for(var i = 0; i<numLat;i++) {
+      drawObject(ctx, i, xOff, yOff);
+    }
+    return canvas;
+  }
+  
+  function getColor(val) {
+    var color;
+    if (val > 0.33 && val <= 0.66) {
+      color = "orange";
+    } else if (val > 0.66 && val <= 1) {
+      color = "red";
+    } else {
+      color = 'yellow';
+    }
+    return color;
+  }
+  
+  function drawObject(ctx, i, xOff, yOff) {
+    setTimeout(function () {
+      var minLon = bounds[0],
+        maxLat = bounds[3];
+      var lat1 = maxLat - i * size,
+        lat2 = maxLat - (i + 1) * size;
+      var latC = (lat1 + lat2) / 2;
+      for(var j = 0;j<numLon;j++) {
+        var lon1 = minLon + j * size,
+          lon2 = minLon + (j + 1) * size;
+        var lonC = (lon1 + lon2) / 2;
+        var coord = ol.proj.fromLonLat([lonC, latC]);
+        var val = Math.random();
+        var color = isOnLand(coord) ? getColor(val) : 'rgba(0,0,0,0)';
+        var topLeftP = ol.proj.fromLonLat([lon1, lat1]);
+        var topLeftSrc = map.getPixelFromCoordinate(topLeftP);
+        var rectSize = getResSize();
+        var x = topLeftSrc[0] + xOff,
+          y = topLeftSrc[1] + yOff;
+        ctx.beginPath();
+        ctx.rect(x, y, rectSize[0], rectSize[1]);
+        ctx.fillStyle = color;
+        ctx.fill();
+        if (i === numLat - 1) {
+          var center = map.getView().getCenter();
+          center = [center[0] + 1, center[1]];
+          map.getView().setCenter(center);
+        }
+      }
+    })
+  }
+</script>
+</body>
