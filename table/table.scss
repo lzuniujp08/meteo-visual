@@ -1,7 +1,7 @@
 @charset "utf-8";
 
-html,
-body {
+body,
+html {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -13,7 +13,6 @@ body {
 ul {
   list-style: none;
 }
-
 $height: 30px;
 $width: 100px;
 $min-height: 100px;
@@ -21,21 +20,24 @@ $min-width: 200px;
 $scroll-width: 6px;
 
 ::-webkit-scrollbar {
-/*滚动条整体样式*/
-  width : $scroll-width;  /*高宽分别对应横竖滚动条的尺寸*/
+  /*滚动条整体样式*/
+  width: $scroll-width;
+  /*高宽分别对应横竖滚动条的尺寸*/
   height: $scroll-width;
 }
+
 ::-webkit-scrollbar-thumb {
   /*滚动条里面小方块*/
   border-radius: $scroll-width;
-  box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
-  background   : #535353;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+  background: #535353;
 }
+
 ::-webkit-scrollbar-track {
   /*滚动条里面轨道*/
-  box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
   border-radius: $scroll-width;
-  background   : #ededed;
+  background: #ededed;
 }
 
 .fixed-col-row {
@@ -71,6 +73,7 @@ $scroll-width: 6px;
   overflow: auto;
   max-height: $min-height;
   max-width: $min-width;
+
   .t-row {
     white-space: nowrap;
     font-size: 0;
